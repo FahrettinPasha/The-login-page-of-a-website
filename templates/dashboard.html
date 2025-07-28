@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Hoş Geldiniz</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}"> <!-- Favicon eklendi -->
+</head>
+<body>
+    <div class="container">
+        <h1>Başarıyla Giriş Yaptınız!</h1>
+        <p>Kargo takip sistemine hoş geldiniz, {{ kullanici.ad_soyad }}.</p>
+        
+        <div class="user-info">
+            <h2>Profil Bilgileriniz</h2>
+            <p><strong>Kullanıcı Adı:</strong> {{ kullanici.username }}</p> {# Yeni: Kullanıcı adını göster #}
+            <p><strong>E-posta:</strong> {{ kullanici.email }}</p>
+            <p><strong>Telefon:</strong> {{ kullanici.telefon }}</p>
+            <p><strong>TC Kimlik No:</strong> {{ kullanici.tc_no }}</p>
+            <p><strong>Adres:</strong> {{ kullanici.adres }}</p>
+        </div>
+        
+        <a href="/cikis" class="logout-btn">Çıkış Yap</a>
+    </div>
+</body>
+</html>

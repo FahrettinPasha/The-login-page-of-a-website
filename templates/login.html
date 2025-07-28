@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Giriş Yap</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}"> <!-- Favicon eklendi -->
+</head>
+<body>
+    <div class="container">
+        <h1>Giriş Yap</h1>
+        {# Flash mesajları burada gösterilir #}
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <ul class="flashes">
+                {% for category, message in messages %}
+                    <li class="{{ category }}">{{ message }}</li>
+                {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+        <form action="/giris_yap" method="POST">
+            <input type="text" name="user_identifier" placeholder="Kullanıcı Adı veya E-posta" required>
+            <input type="password" name="sifre" placeholder="Şifre" required>
+            <button type="submit">Giriş Yap</button>
+        </form>
+        <p>Hesabınız yok mu? <a href="/">Kayıt Olun</a></p>
+    </div>
+</body>
+</html>

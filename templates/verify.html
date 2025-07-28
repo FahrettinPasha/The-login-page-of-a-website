@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Doğrulama</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}"> <!-- Favicon eklendi -->
+</head>
+<body>
+    <div class="container">
+        <h1>Doğrulama Kodu</h1>
+        {# Flash mesajları burada gösterilir #}
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <ul class="flashes">
+                {% for category, message in messages %}
+                    <li class="{{ category }}">{{ message }}</li>
+                {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+        <p>{{ email }} adresine gönderilen kodu girin</p>
+        <form action="/dogrula" method="POST">
+            <input type="text" name="kod" placeholder="6 Haneli Kod" required>
+            <button type="submit">Doğrula</button>
+        </form>
+    </div>
+</body>
+</html>
