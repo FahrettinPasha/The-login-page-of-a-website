@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 from flask_sqlalchemy import SQLAlchemy
 import random
 import string
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date # date import edildi
 import os
 from flask_mail import Mail, Message
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -101,8 +101,8 @@ def kayit():
     veri = request.form
     ad = veri.get('ad', '').strip()
     soyad = veri.get('soyad', '').strip()
-    username = veri.get('username', '').strip().lower() # Küçük harfe çevrildi
-    email = veri.get('email', '').strip().lower() # Küçük harfe çevrildi
+    username = veri.get('username', '').strip().lower()
+    email = veri.get('email', '').strip().lower()
     sifre = veri.get('sifre', '')
     telefon = veri.get('telefon', '').strip()
     tc_no = veri.get('tc_no', '').strip()
@@ -142,6 +142,15 @@ def kayit():
         if dogum_tarihi > datetime.now().date():
             flash('Doğum tarihi gelecekte olamaz.', 'error')
             return redirect(url_for('index'))
+
+        # 18 yaş kontrolü
+        today = date.today() # datetime.now().date() yerine date.today() kullanıldı
+        eighteen_years_ago = today.replace(year=today.year - 18)
+        # Eğer doğum tarihi 18 yıl önceki tarihten sonra ise (yani daha yakınsa), kişi 18 yaşından küçüktür.
+        if dogum_tarihi > eighteen_years_ago:
+            flash('Kayıt olmak için en az 18 yaşında olmalısınız.', 'error')
+            return redirect(url_for('index'))
+
     except ValueError:
         flash('Geçerli bir doğum tarihi giriniz.', 'error')
         return redirect(url_for('index'))
@@ -307,6 +316,7 @@ def cikis():
     flash('Başarıyla çıkış yaptınız.', 'info')
     return redirect(url_for('giris_sayfasi'))
 
+# Şifre Sıfırlama Talebi Sayfası
 @app.route('/sifre_sifirla', methods=['GET', 'POST'])
 def forgot_password():
     if request.method == 'POST':
@@ -373,8 +383,3 @@ def create_tables():
 if __name__ == '__main__':
     create_tables()  # Veritabanı tablolarını oluştur
     app.run(debug=True)
-
-
-
-
-

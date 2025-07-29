@@ -145,13 +145,12 @@
             document.getElementById('email'),
             document.getElementById('telefon'),
             document.getElementById('tc_no'),
-            document.getElementById('dogum_tarihi'),
-            document.getElementById('adres')
+            document.getElementById('adres') // Dogum tarihi ayrı ele alınacak
         ];
 
         function applyValidationAndIcon(inputElement) {
             const iconElement = inputElement.closest('.input-group').querySelector('.input-feedback-icon');
-            if (!iconElement) return; // İkon elementi yoksa devam etme
+            if (!iconElement) return;
 
             if (inputElement.value.length === 0) {
                 inputElement.classList.remove('is-valid', 'is-invalid');
@@ -173,12 +172,65 @@
         }
 
         inputsToValidate.forEach(input => {
-            if (input) { // Input elementi varsa
+            if (input) {
                 input.addEventListener('input', function() {
                     applyValidationAndIcon(this);
                 });
             }
         });
+
+        // Doğum tarihi için özel doğrulama ve ikon gösterme
+        const dogumTarihiInput = document.getElementById('dogum_tarihi');
+
+        function validateDogumTarihi() {
+            const inputElement = dogumTarihiInput;
+            const iconElement = inputElement.closest('.input-group').querySelector('.input-feedback-icon');
+            if (!iconElement) return;
+
+            if (inputElement.value.length === 0) {
+                inputElement.classList.remove('is-valid', 'is-invalid');
+                iconElement.classList.remove('valid-icon', 'invalid-icon');
+                iconElement.textContent = '';
+                return;
+            }
+
+            const birthDateStr = inputElement.value;
+            const birthDate = new Date(birthDateStr);
+            const today = new Date();
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const m = today.getMonth() - birthDate.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
+            }
+
+            // Gelecek bir tarih girilmesini engelle
+            if (birthDate > today) {
+                inputElement.classList.remove('is-valid');
+                inputElement.classList.add('is-invalid');
+                iconElement.classList.remove('valid-icon');
+                iconElement.classList.add('invalid-icon');
+                iconElement.textContent = '✕';
+                return;
+            }
+
+            // 18 yaş kontrolü
+            if (age < 18) {
+                inputElement.classList.remove('is-valid');
+                inputElement.classList.add('is-invalid');
+                iconElement.classList.remove('valid-icon');
+                iconElement.classList.add('invalid-icon');
+                iconElement.textContent = '✕';
+            } else {
+                inputElement.classList.remove('is-invalid');
+                inputElement.classList.add('is-valid');
+                iconElement.classList.remove('invalid-icon');
+                iconElement.classList.add('valid-icon');
+                iconElement.textContent = '✓';
+            }
+        }
+
+        dogumTarihiInput.addEventListener('input', validateDogumTarihi);
+        dogumTarihiInput.addEventListener('change', validateDogumTarihi); // Date picker değiştiğinde de kontrol et
 
         // Telefon ülke kodu seçimi için JavaScript
         const countryCodeSelect = document.getElementById('country-code');
@@ -197,6 +249,7 @@
             });
             passwordInput.dispatchEvent(new Event('input')); // Şifre gücü geri bildirimini başlat
             displayCountryCode.textContent = countryCodeSelect.value; // Varsayılan ülke kodunu göster
+            validateDogumTarihi(); // Doğum tarihi için başlangıçta doğrulama
         });
     </script>
 </body>
