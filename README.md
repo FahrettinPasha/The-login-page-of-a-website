@@ -1,101 +1,100 @@
-🚀 The Login Page of a Website — Easy to Use, Easy to Integrate!
 
-This project provides a basic but secure login and registration system using HTML, CSS, JavaScript (frontend) and Python Flask (backend). It is designed to be simple, beginner-friendly, and customizable.
-🧠 What This Project Includes
+📦 Kargo Takip Sistemi - User Management Module
+🔍 Overview
 
-    ✅ User registration system
+This is a full-featured user management system for a Cargo Tracking Web Application. It handles:
 
-    ✅ Email verification during registration
+    ✅ User Registration
 
-    ✅ Login system with username and password (no verification code required)
+    📧 Email Verification with Code (valid for 10 minutes)
 
-    ✅ Secure password hashing
+    🔐 Secure Login (via email or username)
 
-    ✅ Clean and minimal frontend design (no unnecessary animations)
+    🔁 Password Reset via Email Token (valid for 1 hour)
 
-    ✅ File structure optimized for easy understanding and editing
+    📬 Flask-Mail Integration for Gmail
 
-📂 Folder Structure (Explained Like You're 5)
+    📅 Date of Birth + T.C. Identity Number + Address + Phone fields
 
-/kargo_sistemi/
-│
-├── static/               --> CSS, images, and JavaScript files
-│   ├── styles.css        --> Basic styles
-│   └── favicon.ico       --> Your browser icon
-│
-├── templates/            --> HTML pages
-│   ├── login.html
-│   ├── register.html
-│   └── home.html
-│
-├── main.py               --> Main Python backend (Flask app)
-├── database.db           --> SQLite database (automatically created)
-├── requirements.txt      --> Required Python libraries
-└── README.md             --> You're reading it now :)
+    🛡️ Server-side validations and password strength checking
 
-🛠️ How to Run This Project on Your Own Computer
+    Built with Flask, Flask-SQLAlchemy, Flask-Mail, and secure password hashing.
 
-    Install Python 3
-    https://www.python.org/downloads/
+🧰 How to Set Up (Step by Step)
+1. Clone the repository
 
-    Clone this repository
+git clone https://github.com/your-username/kargo_sistemi.git
+cd kargo_sistemi
 
-git clone https://github.com/FahrettinPasha/The-login-page-of-a-website.git
-cd The-login-page-of-a-website
+2. Install Python dependencies
 
-Create a virtual environment (optional but recommended)
+Use a virtual environment (optional but recommended):
 
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-Install required packages
-
+source venv/bin/activate  # On Windows use: venv\Scripts\activate
 pip install -r requirements.txt
 
-Run the server
+    If requirements.txt is missing, install manually:
 
-python main.py
+pip install Flask Flask-SQLAlchemy Flask-Mail itsdangerous Werkzeug
 
-Visit
+3. Configure Gmail for email sending
+
+Make sure:
+
+    You have 2-Step Verification enabled on your Gmail.
+
+    You generate an App Password:
+    https://myaccount.google.com/apppasswords
+
+Edit this part in app.py:
+
+app.config['MAIL_USERNAME'] = 'your_gmail@gmail.com'
+app.config['MAIL_PASSWORD'] = 'your_app_password'
+
+4. Run the app
+
+python app.py
+
 Open your browser and go to:
+http://localhost:5000
+🧩 How to Integrate Into Your Own Project
 
-    http://localhost:5000
+You can integrate the user system into your own Flask app in 3 ways:
+Option A: Use it as a separate microservice
 
-🔄 How to Integrate This Project Into Your Own System (Step-by-Step)
+Run it on a subdomain like auth.yourdomain.com, then redirect back after login.
+Option B: Copy the core logic
 
-If you want to use this project inside your own system, follow these steps:
-1. Copy Only What You Need
+Copy these files or parts into your project:
 
-    Copy the templates/ folder to your own Flask app.
+    app.py (especially the routes and models)
 
-    Copy the static/ folder if you want to keep the same frontend.
+    templates/ (HTML pages: register.html, verify.html, login.html, etc.)
 
-    Merge the routes from main.py into your Flask backend. (Only copy the parts you need like register, login, etc.)
+    Reuse:
 
-2. Database Integration
+        Kullanici model
 
-    This project uses SQLite. If you're using another database (e.g. PostgreSQL or MySQL), you can easily adapt the code.
+        Registration & email verification logic
 
-    Update the database connection and queries as needed.
+        Login & session logic
 
-3. Email Verification Setup
+        Password reset functions
 
-    The send_verification_email() function in main.py uses Python’s smtplib. You can change the SMTP settings to match your provider (e.g. Gmail, Mailgun, etc.).
+Option C: Turn it into a Flask Blueprint
 
-    Don't forget to allow access in your email account if using Gmail (or use an app password).
+This is better for modular architecture. Extract routes and models into a Blueprint module and import it in your main app.
+📌 Important Notes
 
-4. Customize the Design
+    The system uses SQLite (site.db) by default. For production, use PostgreSQL or MySQL.
 
-    All styles are in static/styles.css, so you can change colors, layout, fonts, etc.
+    Email codes and password reset tokens are time-limited for security.
 
-    The HTML is kept simple so you can easily integrate it with your own templates.
+    Passwords are hashed using Werkzeug (PBKDF2).
 
-5. Test It!
+    Make sure to protect your SECRET_KEY in production.
 
-    Before going live, always test registration, login, and email verification flows.
+🧪 Sample Test Users
 
-    You can manually view the database using DB tools like DB Browser for SQLite.
-
-📧 Need Help?
-
-If you need help or want to ask questions about this system, feel free to open an issue or contact me via GitHub.
+After registering, check your email for a code. If Gmail blocks it, check spam or use a different mail.
