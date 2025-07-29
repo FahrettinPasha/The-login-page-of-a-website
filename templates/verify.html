@@ -3,7 +3,7 @@
 <head>
     <title>Doğrulama</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}"> <!-- Favicon eklendi -->
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
 </head>
 <body>
     <div class="container">
@@ -23,6 +23,7 @@
             <input type="text" name="kod" placeholder="6 Haneli Kod" required>
             <button type="submit">Doğrula</button>
         </form>
+        <p>Kodu almadınız mı veya süresi mi doldu? <a href="/kodu_yeniden_gonder">Kodu Yeniden Gönder</a></p> {# Kodu yeniden gönderme linki #}
     </div>
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
     <title>Kayıt Ol</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}"> <!-- Favicon eklendi -->
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
 </head>
 <body>
     <div class="container">
@@ -19,16 +19,93 @@
             {% endif %}
         {% endwith %}
         <form action="/kayit" method="POST">
-            <input type="text" name="ad_soyad" placeholder="Ad Soyad" required>
+            <input type="text" name="ad" placeholder="Adınız" required>
+            <input type="text" name="soyad" placeholder="Soyadınız" required>
             <input type="text" name="username" placeholder="Kullanıcı Adı (en az 3 karakter)" required minlength="3">
             <input type="email" name="email" placeholder="E-posta" required>
-            <input type="password" name="sifre" placeholder="Şifre (en az 6 karakter)" required minlength="6">
-            <input type="text" name="telefon" placeholder="Telefon (örn: 5xxxxxxxxx)" required pattern="[0-9]{10,15}" title="Telefon numarası sadece rakamlardan oluşmalı ve 10 ile 15 hane arasında olmalıdır.">
-            <input type="text" name="tc_no" placeholder="TC Kimlik No (11 haneli)" required pattern="[0-9]{11}" title="TC Kimlik No 11 haneli olmalı ve sadece rakamlardan oluşmalıdır.">
+            <input type="password" id="sifre" name="sifre" placeholder="Şifre (min 8 karakter, B/k harf, rakam, özel)" required minlength="8">
+            <div id="password-strength-feedback" class="password-feedback"></div> {# Şifre gücü geri bildirimi #}
+            <input type="tel" id="telefon" name="telefon" placeholder="Telefon (örn: 5xxxxxxxxx)" required pattern="[0-9]{10,15}" title="Telefon numarası sadece rakamlardan oluşmalı ve 10 ile 15 hane arasında olmalıdır.">
+            <input type="text" id="tc_no" name="tc_no" placeholder="TC Kimlik No (11 haneli)" required pattern="[0-9]{11}" title="TC Kimlik No 11 haneli olmalı ve sadece rakamlardan oluşmalıdır.">
+            <input type="date" name="dogum_tarihi" placeholder="Doğum Tarihi" required>
             <textarea name="adres" placeholder="Adres"></textarea>
             <button type="submit">Kayıt Ol</button>
         </form>
         <p>Zaten hesabınız var? <a href="/giris">Giriş Yapın</a></p>
     </div>
+
+    <script>
+        // Şifre gücü kontrolü için JavaScript
+        const passwordInput = document.getElementById('sifre');
+        const passwordFeedback = document.getElementById('password-strength-feedback');
+
+        passwordInput.addEventListener('input', function() {
+            const password = this.value;
+            let strength = 0;
+            let feedbackText = '';
+            let feedbackClass = '';
+
+            // Şifre gücü kriterleri
+            const hasMinLength = password.length >= 8;
+            const hasUpperCase = /[A-Z]/.test(password);
+            const hasLowerCase = /[a-z]/.test(password);
+            const hasDigit = /[0-9]/.test(password);
+            const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+
+            if (hasMinLength) strength++;
+            if (hasUpperCase) strength++;
+            if (hasLowerCase) strength++;
+            if (hasDigit) strength++;
+            if (hasSpecialChar) strength++;
+
+            if (password.length === 0) {
+                feedbackText = '';
+                feedbackClass = '';
+            } else if (strength < 3) {
+                feedbackText = 'Şifre çok zayıf! (En az 8 karakter, B/k harf, rakam, özel karakter içermeli)';
+                feedbackClass = 'weak';
+            } else if (strength < 5) {
+                feedbackText = 'Şifre orta güçlükte.';
+                feedbackClass = 'medium';
+            } else {
+                feedbackText = 'Şifre güçlü!';
+                feedbackClass = 'strong';
+            }
+
+            passwordFeedback.textContent = feedbackText;
+            passwordFeedback.className = 'password-feedback ' + feedbackClass;
+        });
+
+        // Telefon ve TC Kimlik No için görsel geri bildirim (tik animasyonu yerine kenarlık rengi)
+        const telefonInput = document.getElementById('telefon');
+        const tcNoInput = document.getElementById('tc_no');
+
+        function applyValidationStyle(inputElement) {
+            if (inputElement.value.length === 0) { // Boşsa stil uygulama
+                inputElement.classList.remove('is-valid', 'is-invalid');
+            } else if (inputElement.checkValidity()) {
+                inputElement.classList.remove('is-invalid');
+                inputElement.classList.add('is-valid');
+            } else {
+                inputElement.classList.remove('is-valid');
+                inputElement.classList.add('is-invalid');
+            }
+        }
+
+        telefonInput.addEventListener('input', function() {
+            applyValidationStyle(this);
+        });
+        tcNoInput.addEventListener('input', function() {
+            applyValidationStyle(this);
+        });
+
+        // Sayfa yüklendiğinde mevcut değerler için stil uygula (eğer formda kalmışsa)
+        document.addEventListener('DOMContentLoaded', function() {
+            applyValidationStyle(telefonInput);
+            applyValidationStyle(tcNoInput);
+            // Şifre inputu için de başlangıçta kontrol
+            passwordInput.dispatchEvent(new Event('input'));
+        });
+    </script>
 </body>
 </html>
