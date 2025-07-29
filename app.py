@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 from flask_sqlalchemy import SQLAlchemy
 import random
 import string
-from datetime import datetime, timedelta, date # date import edildi
+from datetime import datetime, timedelta, date
 import os
 from flask_mail import Mail, Message
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -14,20 +14,20 @@ app.config['SECRET_KEY'] = 'cok_gizli_bir_anahtar'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Flask-Mail yapılandırması
+# Flask-Mail configuration
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'karacemalopsiyonel@gmail.com'  # GMAIL adresiniz
-app.config['MAIL_PASSWORD'] = 'yjvf wjii iofc jnwo'      # Google App Şifresi
+app.config['MAIL_USERNAME'] = 'karacemalopsiyonel@gmail.com'  # Your GMAIL address
+app.config['MAIL_PASSWORD'] = 'yjvf wjii iofc jnwo'      # Your Google App Password
 
 mail = Mail(app)
 db = SQLAlchemy(app)
 
-# Tokenizer nesnesi (şifre sıfırlama linkleri için)
+# Tokenizer object for password reset links
 s = URLSafeTimedSerializer(app.config['SECRET_KEY'])
 
-# Kullanıcı Modeli
+# User Model
 class Kullanici(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     ad = db.Column(db.String(50), nullable=False)
@@ -45,11 +45,11 @@ class Kullanici(db.Model):
     reset_token = db.Column(db.String(100), unique=True, nullable=True)
     reset_token_expiry = db.Column(db.DateTime, nullable=True)
 
-# Rastgele 6 haneli kod üretme
+# Generate a random 6-digit code
 def rastgele_kod():
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
 
-# Şifre gücü kontrolü
+# Check password strength
 def check_password_strength(password):
     if len(password) < 8:
         return "Şifre en az 8 karakter olmalıdır."
@@ -61,9 +61,9 @@ def check_password_strength(password):
         return "Şifre en az bir rakam içermelidir."
     if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
         return "Şifre en az bir özel karakter (!@#$%^&*(),.?) içermelidir."
-    return None # Şifre yeterince güçlüyse None döner
+    return None # Returns None if password is strong enough
 
-# E-posta gönderme fonksiyonu
+# Function to send verification email
 def send_verification_email(user_email, verification_code):
     msg = Message("Kargo Takip Sistemi - Doğrulama Kodunuz",
                   sender=app.config['MAIL_USERNAME'],
@@ -76,7 +76,7 @@ def send_verification_email(user_email, verification_code):
         print(f"E-posta gönderme hatası: {e}")
         flash(f"Doğrulama e-postası gönderilemedi: Sunucu hatası veya internet bağlantısı sorunu. Lütfen daha sonra tekrar deneyin.", 'error')
 
-# Şifre sıfırlama e-postası gönderme fonksiyonu
+# Function to send password reset email
 def send_password_reset_email(user_email, token):
     reset_link = url_for('reset_password_token', token=token, _external=True)
     msg = Message("Kargo Takip Sistemi - Şifre Sıfırlama Talebi",
@@ -90,12 +90,12 @@ def send_password_reset_email(user_email, token):
         print(f"E-posta gönderme hatası: {e}")
         flash(f"Şifre sıfırlama e-postası gönderilemedi: Sunucu hatası veya internet bağlantısı sorunu. Lütfen daha sonra tekrar deneyin.", 'error')
 
-# Ana Sayfa (Kayıt Formu)
+# Home Page (Registration Form)
 @app.route('/')
 def index():
     return render_template('register.html')
 
-# Kayıt İşlemi
+# Registration Process
 @app.route('/kayit', methods=['POST'])
 def kayit():
     veri = request.form
@@ -109,44 +109,44 @@ def kayit():
     adres = veri.get('adres', '').strip()
     dogum_tarihi_str = veri.get('dogum_tarihi', '').strip()
 
-    # Sunucu tarafı doğrulama
+    # Server-side validation
     if not ad or not soyad:
         flash('Ad ve Soyad boş bırakılamaz.', 'error')
         return redirect(url_for('index'))
-    if not username or len(username) < 3:
-        flash('Kullanıcı adı en az 3 karakter olmalıdır.', 'error')
+    # Removed minlength validation for username from server-side
+    if not username:
+        flash('Kullanıcı adı boş bırakılamaz.', 'error')
         return redirect(url_for('index'))
     if not email or '@' not in email or '.' not in email:
         flash('Geçerli bir e-posta adresi giriniz.', 'error')
         return redirect(url_for('index'))
     
-    # Şifre gücü kontrolü
+    # Password strength check
     password_strength_error = check_password_strength(sifre)
     if password_strength_error:
         flash(password_strength_error, 'error')
         return redirect(url_for('index'))
 
-    # Telefon numarası için kontrol
+    # Phone number validation
     if not telefon or not telefon.isdigit() or not (10 <= len(telefon) <= 15):
         flash('Geçerli bir telefon numarası giriniz (sadece rakamlar, 10-15 hane arası).', 'error')
         return redirect(url_for('index'))
-    # TC Kimlik No için kontrol
+    # TC ID number validation
     if not tc_no or not tc_no.isdigit() or len(tc_no) != 11:
         flash('TC Kimlik No 11 haneli ve sadece rakamlardan oluşmalıdır.', 'error')
         return redirect(url_for('index'))
     
-    # Doğum tarihi kontrolü
+    # Birth date validation
     try:
         dogum_tarihi = datetime.strptime(dogum_tarihi_str, '%Y-%m-%d').date()
-        # Gelecek bir tarih girilmesini engelle
+        # Prevent future dates
         if dogum_tarihi > datetime.now().date():
             flash('Doğum tarihi gelecekte olamaz.', 'error')
             return redirect(url_for('index'))
 
-        # 18 yaş kontrolü
-        today = date.today() # datetime.now().date() yerine date.today() kullanıldı
+        # 18 years old check
+        today = date.today()
         eighteen_years_ago = today.replace(year=today.year - 18)
-        # Eğer doğum tarihi 18 yıl önceki tarihten sonra ise (yani daha yakınsa), kişi 18 yaşından küçüktür.
         if dogum_tarihi > eighteen_years_ago:
             flash('Kayıt olmak için en az 18 yaşında olmalısınız.', 'error')
             return redirect(url_for('index'))
@@ -155,7 +155,7 @@ def kayit():
         flash('Geçerli bir doğum tarihi giriniz.', 'error')
         return redirect(url_for('index'))
 
-    # E-posta ve Kullanıcı adı benzersizlik kontrolü (küçük harfe çevrilmiş haliyle)
+    # Email and Username uniqueness check (case-insensitive)
     if Kullanici.query.filter_by(email=email).first():
         flash('Bu e-posta zaten kayıtlı!', 'error')
         return redirect(url_for('index'))
@@ -163,7 +163,7 @@ def kayit():
         flash('Bu kullanıcı adı zaten alınmış!', 'error')
         return redirect(url_for('index'))
 
-    # Şifreyi hash'le
+    # Hash the password
     hashed_password = generate_password_hash(sifre)
 
     yeni_kullanici = Kullanici(
@@ -189,7 +189,7 @@ def kayit():
     flash('Kaydınız başarıyla alındı. Lütfen e-postanıza gönderilen doğrulama kodunu girin.', 'success')
     return redirect(url_for('dogrulama_sayfasi'))
 
-# Doğrulama Sayfası
+# Verification Page
 @app.route('/dogrulama')
 def dogrulama_sayfasi():
     if 'dogrulama_email' not in session:
@@ -197,7 +197,7 @@ def dogrulama_sayfasi():
         return redirect(url_for('index'))
     return render_template('verify.html', email=session.get('dogrulama_email', ''))
 
-# Doğrulama İşlemi
+# Verification Process
 @app.route('/dogrula', methods=['POST'])
 def dogrula():
     email = session.get('dogrulama_email')
@@ -210,10 +210,10 @@ def dogrula():
         flash('Kullanıcı bulunamadı.', 'error')
         return redirect(url_for('index'))
     
-    # Kod süresi kontrolü (10 dakika)
+    # Code expiration check (10 minutes)
     if datetime.now() > kullanici.kod_zaman + timedelta(minutes=10):
         flash('Kod süresi doldu! Lütfen tekrar kayıt olun.', 'error')
-        session.pop('dogrulama_email', None) # Süresi dolan kodu temizle
+        session.pop('dogrulama_email', None) # Clear expired code
         return redirect(url_for('index'))
     
     if request.form['kod'] == kullanici.dogrulama_kodu:
@@ -226,7 +226,7 @@ def dogrula():
         flash('Geçersiz doğrulama kodu!', 'error')
         return redirect(url_for('dogrulama_sayfasi'))
 
-# Doğrulama Kodu Yeniden Gönderme
+# Resend Verification Code
 @app.route('/kodu_yeniden_gonder', methods=['GET'])
 def resend_verification_code():
     email = session.get('dogrulama_email')
@@ -244,7 +244,7 @@ def resend_verification_code():
         session.pop('dogrulama_email', None)
         return redirect(url_for('giris_sayfasi'))
     
-    # Yeni kod oluştur ve zamanı güncelle
+    # Generate new code and update time
     kullanici.dogrulama_kodu = rastgele_kod()
     kullanici.kod_zaman = datetime.now()
     db.session.commit()
@@ -254,29 +254,29 @@ def resend_verification_code():
     return redirect(url_for('dogrulama_sayfasi'))
 
 
-# Giriş Sayfası
+# Login Page
 @app.route('/giris')
 def giris_sayfasi():
     return render_template('login.html')
 
-# Giriş İşlemi
+# Login Process
 @app.route('/giris_yap', methods=['POST'])
 def giris_yap():
     veri = request.form
-    user_identifier = veri.get('user_identifier', '').strip().lower() # Küçük harfe çevrildi
+    user_identifier = veri.get('user_identifier', '').strip().lower()
     sifre = veri.get('sifre', '')
 
     if not user_identifier or not sifre:
         flash('Kullanıcı adı/E-posta ve şifre boş bırakılamaz.', 'error')
         return redirect(url_for('giris_sayfasi'))
 
-    # Kullanıcıyı e-posta veya kullanıcı adına göre bul
+    # Find user by email or username
     kullanici = Kullanici.query.filter_by(email=user_identifier).first()
     if not kullanici:
         kullanici = Kullanici.query.filter_by(username=user_identifier).first()
     
     if kullanici:
-        # Hashlenmiş şifreyi kontrol et
+        # Check hashed password
         if check_password_hash(kullanici.sifre, sifre):
             if kullanici.dogrulandi_mi:
                 session['giris_yapildi'] = True
@@ -308,7 +308,7 @@ def dashboard():
     
     return render_template('dashboard.html', kullanici=kullanici)
 
-# Çıkış Yap
+# Logout
 @app.route('/cikis')
 def cikis():
     session.pop('giris_yapildi', None)
@@ -316,7 +316,7 @@ def cikis():
     flash('Başarıyla çıkış yaptınız.', 'info')
     return redirect(url_for('giris_sayfasi'))
 
-# Şifre Sıfırlama Talebi Sayfası
+# Forgot Password Request Page
 @app.route('/sifre_sifirla', methods=['GET', 'POST'])
 def forgot_password():
     if request.method == 'POST':
@@ -325,7 +325,7 @@ def forgot_password():
         if kullanici:
             token = s.dumps(email, salt='password-reset-salt')
             kullanici.reset_token = token
-            kullanici.reset_token_expiry = datetime.now() + timedelta(hours=1) # Token 1 saat geçerli
+            kullanici.reset_token_expiry = datetime.now() + timedelta(hours=1) # Token valid for 1 hour
             db.session.commit()
             send_password_reset_email(email, token)
             flash('Şifre sıfırlama bağlantısı e-posta adresinize gönderildi.', 'success')
@@ -334,12 +334,12 @@ def forgot_password():
             flash('Bu e-posta adresiyle kayıtlı bir kullanıcı bulunamadı.', 'error')
     return render_template('forgot_password.html')
 
-# Şifre Sıfırlama Token Doğrulama ve Yeni Şifre Belirleme Sayfası
+# Password Reset Token Validation and New Password Setting Page
 @app.route('/sifre_sifirla/<token>', methods=['GET', 'POST'])
 def reset_password_token(token):
     email = None
     try:
-        email = s.loads(token, salt='password-reset-salt', max_age=3600) # Token'ı 1 saat içinde doğrula
+        email = s.loads(token, salt='password-reset-salt', max_age=3600) # Validate token within 1 hour
     except SignatureExpired:
         flash('Şifre sıfırlama bağlantısının süresi doldu. Lütfen tekrar talep edin.', 'error')
         return redirect(url_for('forgot_password'))
@@ -375,11 +375,11 @@ def reset_password_token(token):
 
     return render_template('reset_password.html', token=token)
 
-# Veritabanını uygulama başlatıldığında oluştur
+# Create database tables when the application starts
 def create_tables():
     with app.app_context():
         db.create_all()
 
 if __name__ == '__main__':
-    create_tables()  # Veritabanı tablolarını oluştur
+    create_tables()  # Create database tables
     app.run(debug=True)

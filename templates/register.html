@@ -8,7 +8,7 @@
 <body>
     <div class="container">
         <h1>Kayıt Formu</h1>
-        {# Flash mesajları burada gösterilir #}
+        {# Flash messages are displayed here #}
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 <ul class="flashes">
@@ -28,7 +28,7 @@
                 <div class="input-feedback-icon"></div>
             </div>
             <div class="input-group">
-                <input type="text" id="username" name="username" placeholder="Kullanıcı Adı (en az 3 karakter)" required minlength="3">
+                <input type="text" id="username" name="username" placeholder="Kullanıcı Adı" required>
                 <div class="input-feedback-icon"></div>
             </div>
             <div class="input-group">
@@ -39,23 +39,22 @@
                 <input type="password" id="sifre" name="sifre" placeholder="Şifre (min 8 karakter, B/k harf, rakam, özel)" required minlength="8">
                 <div class="input-feedback-icon"></div>
             </div>
-            <div id="password-strength-feedback" class="password-feedback"></div> {# Şifre gücü geri bildirimi metni #}
-            <div class="password-strength-bar-container">
-                <div id="password-strength-bar" class="password-strength-bar"></div> {# Şifre gücü barı #}
+            <div id="password-strength-feedback" class="password-feedback hidden"></div> {# Hidden by default #}
+            <div class="password-strength-bar-container hidden"> {# Hidden by default #}
+                <div id="password-strength-bar" class="password-strength-bar"></div>
             </div>
             
-            {# Telefon numarası için yeni yapı #}
-            <div class="phone-input-group input-group"> {# input-group sınıfı buraya da eklendi #}
+            {# New structure for phone number #}
+            <div class="phone-input-group input-group">
                 <select id="country-code" class="country-code-select">
-                    <option value="+90" selected>TR (+90)</option>
-                    <option value="+1">US (+1)</option>
-                    <option value="+44">UK (+44)</option>
-                    <option value="+49">DE (+49)</option>
-                    {# Daha fazla ülke kodu eklenebilir #}
+                    <option value="+90" selected>🇹🇷 +90</option>
+                    <option value="+1">🇺🇸 +1</option>
+                    <option value="+44">🇬🇧 +44</option>
+                    <option value="+49">🇩🇪 +49</option>
+                    {# More country codes can be added #}
                 </select>
-                <span id="display-country-code" class="display-country-code">+90</span>
                 <input type="tel" id="telefon" name="telefon" placeholder="Telefon Numarası" required pattern="[0-9]{10,15}" title="Telefon numarası sadece rakamlardan oluşmalı ve 10 ile 15 hane arasında olmalıdır.">
-                <div class="input-feedback-icon"></div> {# Telefon için ikon #}
+                <div class="input-feedback-icon"></div> {# Icon for phone #}
             </div>
 
             <div class="input-group">
@@ -67,7 +66,7 @@
                 <div class="input-feedback-icon"></div>
             </div>
             <div class="input-group">
-                <textarea id="adres" name="adres" placeholder="Adres"></textarea> {# Adres textarea #}
+                <textarea id="adres" name="adres" placeholder="Adres"></textarea> {# Address textarea #}
                 <div class="input-feedback-icon"></div>
             </div>
             <button type="submit">Kayıt Ol</button>
@@ -76,15 +75,29 @@
     </div>
 
     <script>
-        // Şifre gücü kontrolü için JavaScript
+        // JavaScript for password strength check
         const passwordInput = document.getElementById('sifre');
         const passwordFeedback = document.getElementById('password-strength-feedback');
+        const passwordStrengthBarContainer = document.querySelector('.password-strength-bar-container');
         const passwordStrengthBar = document.getElementById('password-strength-bar');
         const passwordIcon = passwordInput.closest('.input-group').querySelector('.input-feedback-icon');
 
         passwordInput.addEventListener('input', function() {
             const password = this.value;
-            let strength = 0; // 0-5 arası puan
+            
+            // Hide bar and feedback if password is empty
+            if (password.length === 0) {
+                passwordFeedback.classList.add('hidden');
+                passwordStrengthBarContainer.classList.add('hidden');
+                passwordIcon.classList.remove('valid-icon', 'invalid-icon');
+                passwordIcon.textContent = '';
+                return; // Stop further processing
+            } else {
+                passwordFeedback.classList.remove('hidden');
+                passwordStrengthBarContainer.classList.remove('hidden');
+            }
+
+            let strength = 0; // Score from 0-5
             let feedbackText = '';
             let feedbackClass = '';
             let barWidth = 0;
@@ -101,33 +114,27 @@
             if (hasDigit) strength++;
             if (hasSpecialChar) strength++;
 
-            if (password.length === 0) {
-                feedbackText = '';
-                feedbackClass = '';
-                barWidth = 0;
-                passwordIcon.classList.remove('valid-icon', 'invalid-icon');
-                passwordIcon.textContent = '';
-            } else if (strength < 3) {
+            if (strength < 3) {
                 feedbackText = 'Şifre çok zayıf! (En az 8 karakter, B/k harf, rakam, özel karakter içermeli)';
                 feedbackClass = 'weak';
                 barWidth = (strength / 5) * 100;
                 passwordIcon.classList.remove('valid-icon');
                 passwordIcon.classList.add('invalid-icon');
-                passwordIcon.textContent = '✕'; // Kırmızı çarpı
+                passwordIcon.textContent = '✕'; // Red cross
             } else if (strength < 5) {
                 feedbackText = 'Şifre orta güçlükte.';
                 feedbackClass = 'medium';
                 barWidth = (strength / 5) * 100;
                 passwordIcon.classList.remove('valid-icon');
                 passwordIcon.classList.add('invalid-icon');
-                passwordIcon.textContent = '✕'; // Kırmızı çarpı
+                passwordIcon.textContent = '✕'; // Red cross
             } else { // strength === 5
                 feedbackText = 'Şifre güçlü!';
                 feedbackClass = 'strong';
                 barWidth = 100;
                 passwordIcon.classList.remove('invalid-icon');
                 passwordIcon.classList.add('valid-icon');
-                passwordIcon.textContent = '✓'; // Yeşil tik
+                passwordIcon.textContent = '✓'; // Green tick
             }
 
             passwordFeedback.textContent = feedbackText;
@@ -137,7 +144,7 @@
             passwordStrengthBar.className = 'password-strength-bar ' + feedbackClass;
         });
 
-        // Genel input doğrulama ve ikon gösterme
+        // General input validation and icon display
         const inputsToValidate = [
             document.getElementById('ad'),
             document.getElementById('soyad'),
@@ -145,7 +152,7 @@
             document.getElementById('email'),
             document.getElementById('telefon'),
             document.getElementById('tc_no'),
-            document.getElementById('adres') // Dogum tarihi ayrı ele alınacak
+            document.getElementById('adres') // Birth date is handled separately
         ];
 
         function applyValidationAndIcon(inputElement) {
@@ -161,13 +168,13 @@
                 inputElement.classList.add('is-valid');
                 iconElement.classList.remove('invalid-icon');
                 iconElement.classList.add('valid-icon');
-                iconElement.textContent = '✓'; // Yeşil tik
+                iconElement.textContent = '✓'; // Green tick
             } else {
                 inputElement.classList.remove('is-valid');
                 inputElement.classList.add('is-invalid');
                 iconElement.classList.remove('valid-icon');
                 iconElement.classList.add('invalid-icon');
-                iconElement.textContent = '✕'; // Kırmızı çarpı
+                iconElement.textContent = '✕'; // Red cross
             }
         }
 
@@ -179,7 +186,7 @@
             }
         });
 
-        // Doğum tarihi için özel doğrulama ve ikon gösterme
+        // Special validation and icon display for birth date
         const dogumTarihiInput = document.getElementById('dogum_tarihi');
 
         function validateDogumTarihi() {
@@ -203,7 +210,7 @@
                 age--;
             }
 
-            // Gelecek bir tarih girilmesini engelle
+            // Prevent future dates
             if (birthDate > today) {
                 inputElement.classList.remove('is-valid');
                 inputElement.classList.add('is-invalid');
@@ -213,7 +220,7 @@
                 return;
             }
 
-            // 18 yaş kontrolü
+            // 18 years old check
             if (age < 18) {
                 inputElement.classList.remove('is-valid');
                 inputElement.classList.add('is-invalid');
@@ -230,26 +237,26 @@
         }
 
         dogumTarihiInput.addEventListener('input', validateDogumTarihi);
-        dogumTarihiInput.addEventListener('change', validateDogumTarihi); // Date picker değiştiğinde de kontrol et
+        dogumTarihiInput.addEventListener('change', validateDogumTarihi); // Check when date picker changes
 
-        // Telefon ülke kodu seçimi için JavaScript
+        // JavaScript for phone country code selection
         const countryCodeSelect = document.getElementById('country-code');
-        const displayCountryCode = document.getElementById('display-country-code');
+        // displayCountryCode span is removed, no need for its JS part
 
         countryCodeSelect.addEventListener('change', function() {
-            displayCountryCode.textContent = this.value;
+            // The select element now directly displays the country code and flag
         });
 
-        // Sayfa yüklendiğinde varsayılan değerler için stil ve ikon uygula
+        // Apply styles and icons for default values on page load
         document.addEventListener('DOMContentLoaded', function() {
             inputsToValidate.forEach(input => {
                 if (input) {
                     applyValidationAndIcon(input);
                 }
             });
-            passwordInput.dispatchEvent(new Event('input')); // Şifre gücü geri bildirimini başlat
-            displayCountryCode.textContent = countryCodeSelect.value; // Varsayılan ülke kodunu göster
-            validateDogumTarihi(); // Doğum tarihi için başlangıçta doğrulama
+            // passwordInput.dispatchEvent(new Event('input')); // Removed as bar is hidden initially
+            // displayCountryCode.textContent = countryCodeSelect.value; // Removed
+            validateDogumTarihi(); // Initial validation for birth date
         });
     </script>
 </body>

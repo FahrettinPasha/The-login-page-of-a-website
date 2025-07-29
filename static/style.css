@@ -1,4 +1,4 @@
-/* Flash mesajları için stil */
+/* Flash messages styles */
 .flashes {
     list-style-type: none;
     padding: 0;
@@ -16,27 +16,27 @@
 }
 
 .flashes li.error {
-    background-color: #dc3545; /* Kırmızı */
+    background-color: #dc3545; /* Red */
 }
 
 .flashes li.success {
-    background-color: #28a745; /* Yeşil */
+    background-color: #28a745; /* Green */
 }
 
 .flashes li.info {
-    background-color: #17a2b8; /* Mavi */
+    background-color: #17a2b8; /* Blue */
 }
 
-/* Input doğrulama stilleri (kenarlık rengi) */
+/* Input validation styles (border color) */
 input.is-valid {
-    border: 2px solid #28a745; /* Yeşil kenarlık */
+    border: 2px solid #28a745; /* Green border */
 }
 
 input.is-invalid {
-    border: 2px solid #dc3545; /* Kırmızı kenarlık */
+    border: 2px solid #dc3545; /* Red border */
 }
 
-/* Şifre gücü geri bildirimi metni */
+/* Password strength feedback text */
 .password-feedback {
     font-size: 0.8em;
     margin-top: -10px;
@@ -46,18 +46,18 @@ input.is-invalid {
 }
 
 .password-feedback.weak {
-    color: #dc3545; /* Kırmızı */
+    color: #dc3545; /* Red */
 }
 
 .password-feedback.medium {
-    color: #ffc107; /* Turuncu */
+    color: #ffc107; /* Orange */
 }
 
 .password-feedback.strong {
-    color: #28a745; /* Yeşil */
+    color: #28a745; /* Green */
 }
 
-/* Genel form ve konteyner stilleri */
+/* General form and container styles */
 body {
     font-family: Arial, sans-serif;
     background-color: #f4f4f4;
@@ -89,35 +89,34 @@ form {
     gap: 15px;
 }
 
-/* Input ve ikonları yan yana hizalamak için genel grup */
+/* General group for input and icons */
 .input-group {
-    position: relative; /* İçindeki ikonları konumlandırmak için */
-    display: flex; /* İçindeki elemanların yan yana gelmesi için */
-    align-items: center; /* Dikey hizalama */
-    width: calc(100% - 20px); /* Konteyner genişliği, padding'i hesaba kat */
-    margin: 0 auto; /* Ortalamak için */
-    /* z-index ekleyerek diğer elemanların üstünde kalmasını sağla */
-    z-index: 1;
+    position: relative; /* For positioning icons inside */
+    display: flex; /* For side-by-side elements */
+    align-items: center; /* Vertical alignment */
+    width: calc(100% - 20px); /* Container width, considering padding */
+    margin: 0 auto; /* To center */
+    z-index: 1; /* Keep above other elements */
 }
 
-/* Tüm input ve textarea'lar için ortak stil */
+/* Common styles for all input and textarea elements */
 input[type="text"],
 input[type="email"],
 input[type="password"],
 input[type="tel"],
 input[type="date"],
 textarea {
-    flex-grow: 1; /* Inputun kalan alanı doldurması için */
-    width: auto; /* Flexbox ile uyumlu */
+    flex-grow: 1; /* Input fills remaining space */
+    width: auto; /* Compatible with flexbox */
     padding: 10px;
-    margin: 0; /* İç marginleri sıfırla */
+    margin: 0; /* Clear inner margins */
     border: 1px solid #ddd;
     border-radius: 5px;
     box-sizing: border-box;
-    padding-right: 35px; /* İkon için boşluk bırak */
-    cursor: text; /* Tıklanabilir olduğunu belirt */
-    z-index: 2; /* Inputun ikonun üstünde olmasını sağla */
-    background-color: white; /* Arka plan rengini belirle */
+    padding-right: 35px; /* Leave space for icon */
+    cursor: text; /* Indicate text input */
+    z-index: 2; /* Ensure input is above icon */
+    background-color: white; /* Define background color */
 }
 
 button[type="submit"] {
@@ -165,25 +164,24 @@ a:hover {
 }
 
 .user-info strong {
-    min-width: 120px; /* Label'lar için sabit genişlik */
+    min-width: 120px; /* Fixed width for labels */
     display: inline-block;
 }
 
-/* Adres textarea için stil */
+/* Styles for address textarea */
 textarea {
-    resize: vertical; /* Dikey olarak genişletilebilir */
-    min-height: 120px; /* Minimum yükseklik artırıldı */
+    resize: vertical; /* Vertically resizable */
+    min-height: 120px; /* Increased minimum height */
 }
 
-/* Telefon numarası input grubu için stil */
+/* Styles for phone number input group */
 .phone-input-group {
-    /* Input-group zaten flex ve relative. Burada sadece özel ayarlar */
-    border: 1px solid #ddd; /* Kendi kenarlığı */
+    border: 1px solid #ddd; /* Own border */
     border-radius: 5px;
     overflow: hidden;
-    width: calc(100% - 20px); /* Konteyner genişliği */
-    margin: 0 auto; /* Ortalamak için */
-    z-index: 1; /* Üstte kalmasını sağla */
+    width: calc(100% - 20px); /* Container width */
+    margin: 0 auto; /* To center */
+    z-index: 1; /* Keep above other elements */
 }
 
 .phone-input-group select {
@@ -198,86 +196,81 @@ textarea {
     cursor: pointer;
     font-size: 1em;
     height: 100%;
-    z-index: 2; /* Select'in de üstte olmasını sağla */
+    z-index: 2; /* Ensure select is above */
 }
 
 .phone-input-group select:focus {
     outline: none;
 }
 
-.phone-input-group .display-country-code {
-    padding: 10px;
-    background-color: #e9e9e9;
-    border-right: 1px solid #ddd;
-    font-weight: bold;
-    color: #555;
-    white-space: nowrap;
-    z-index: 2; /* Üstte olmasını sağla */
-}
-
 .phone-input-group input[type="tel"] {
     flex-grow: 1;
-    border: none; /* Kendi kenarlığı phone-input-group'ta */
+    border: none; /* Border handled by phone-input-group */
     padding: 10px;
     border-radius: 0;
     width: auto;
     margin: 0;
-    z-index: 2; /* Inputun da üstte olmasını sağla */
+    z-index: 2; /* Ensure input is above */
 }
 
 .phone-input-group input[type="tel"]:focus {
     outline: none;
 }
 
-/* Şifre Gücü Barı Stilleri */
+/* Password Strength Bar Styles */
 .password-strength-bar-container {
-    width: calc(100% - 20px); /* Konteyner genişliği */
+    width: calc(100% - 20px); /* Container width */
     height: 8px;
     background-color: #e0e0e0;
     border-radius: 4px;
     margin: 5px auto 15px auto;
     overflow: hidden;
-    z-index: 1; /* Üstte kalmasını sağla */
+    z-index: 1;
 }
 
 .password-strength-bar {
     height: 100%;
-    width: 0%;
-    background-color: #ccc;
+    width: 0%; /* Empty initially */
+    background-color: #ccc; /* Default color */
     border-radius: 4px;
-    transition: width 0.3s ease-in-out, background-color 0.3s ease-in-out;
+    transition: width 0.3s ease-in-out, background-color 0.3s ease-in-out; /* Animation */
 }
 
 .password-strength-bar.weak {
-    background-color: #dc3545; /* Kırmızı */
+    background-color: #dc3545; /* Red */
 }
 
 .password-strength-bar.medium {
-    background-color: #ffc107; /* Turuncu */
+    background-color: #ffc107; /* Orange */
 }
 
 .password-strength-bar.strong {
-    background-color: #28a745; /* Yeşil */
+    background-color: #28a745; /* Green */
 }
 
-/* Input Yanı Tik/Çarpı İkon Stilleri */
+/* Input Side Tick/Cross Icon Styles */
 .input-feedback-icon {
     position: absolute;
-    right: 10px; /* Inputun sağında boşluk bırak */
+    right: 10px; /* Space on the right of the input */
     font-size: 1.2em;
     line-height: 1;
     transition: opacity 0.3s ease-in-out;
-    opacity: 0; /* Başlangıçta gizli */
-    pointer-events: none; /* Bu çok önemli! İkonun tıklamayı engellemesini önler */
-    z-index: 3; /* İkonun input ve diğer elementlerin üstünde olmasını sağla (ama tıklanamaz) */
+    opacity: 0; /* Hidden by default */
+    pointer-events: none; /* Very important! Prevents icon from blocking clicks */
+    z-index: 3; /* Ensure icon is above input and other elements (but not clickable) */
 }
 
 .input-feedback-icon.valid-icon {
-    color: #28a745; /* Yeşil tik */
+    color: #28a745; /* Green tick */
     opacity: 1;
 }
 
 .input-feedback-icon.invalid-icon {
-    color: #dc3545; /* Kırmızı çarpı */
+    color: #dc3545; /* Red cross */
     opacity: 1;
+}
+
+/* For elements that should be hidden by default */
+.hidden {
+    display: none;
 }
