@@ -19,16 +19,57 @@
             {% endif %}
         {% endwith %}
         <form action="/kayit" method="POST">
-            <input type="text" name="ad" placeholder="Adınız" required>
-            <input type="text" name="soyad" placeholder="Soyadınız" required>
-            <input type="text" name="username" placeholder="Kullanıcı Adı (en az 3 karakter)" required minlength="3">
-            <input type="email" name="email" placeholder="E-posta" required>
-            <input type="password" id="sifre" name="sifre" placeholder="Şifre (min 8 karakter, B/k harf, rakam, özel)" required minlength="8">
-            <div id="password-strength-feedback" class="password-feedback"></div> {# Şifre gücü geri bildirimi #}
-            <input type="tel" id="telefon" name="telefon" placeholder="Telefon (örn: 5xxxxxxxxx)" required pattern="[0-9]{10,15}" title="Telefon numarası sadece rakamlardan oluşmalı ve 10 ile 15 hane arasında olmalıdır.">
-            <input type="text" id="tc_no" name="tc_no" placeholder="TC Kimlik No (11 haneli)" required pattern="[0-9]{11}" title="TC Kimlik No 11 haneli olmalı ve sadece rakamlardan oluşmalıdır.">
-            <input type="date" name="dogum_tarihi" placeholder="Doğum Tarihi" required>
-            <textarea name="adres" placeholder="Adres"></textarea>
+            <div class="input-group">
+                <input type="text" id="ad" name="ad" placeholder="Adınız" required>
+                <div class="input-feedback-icon"></div>
+            </div>
+            <div class="input-group">
+                <input type="text" id="soyad" name="soyad" placeholder="Soyadınız" required>
+                <div class="input-feedback-icon"></div>
+            </div>
+            <div class="input-group">
+                <input type="text" id="username" name="username" placeholder="Kullanıcı Adı (en az 3 karakter)" required minlength="3">
+                <div class="input-feedback-icon"></div>
+            </div>
+            <div class="input-group">
+                <input type="email" id="email" name="email" placeholder="E-posta" required>
+                <div class="input-feedback-icon"></div>
+            </div>
+            <div class="input-group">
+                <input type="password" id="sifre" name="sifre" placeholder="Şifre (min 8 karakter, B/k harf, rakam, özel)" required minlength="8">
+                <div class="input-feedback-icon"></div>
+            </div>
+            <div id="password-strength-feedback" class="password-feedback"></div> {# Şifre gücü geri bildirimi metni #}
+            <div class="password-strength-bar-container">
+                <div id="password-strength-bar" class="password-strength-bar"></div> {# Şifre gücü barı #}
+            </div>
+            
+            {# Telefon numarası için yeni yapı #}
+            <div class="phone-input-group input-group"> {# input-group sınıfı buraya da eklendi #}
+                <select id="country-code" class="country-code-select">
+                    <option value="+90" selected>TR (+90)</option>
+                    <option value="+1">US (+1)</option>
+                    <option value="+44">UK (+44)</option>
+                    <option value="+49">DE (+49)</option>
+                    {# Daha fazla ülke kodu eklenebilir #}
+                </select>
+                <span id="display-country-code" class="display-country-code">+90</span>
+                <input type="tel" id="telefon" name="telefon" placeholder="Telefon Numarası" required pattern="[0-9]{10,15}" title="Telefon numarası sadece rakamlardan oluşmalı ve 10 ile 15 hane arasında olmalıdır.">
+                <div class="input-feedback-icon"></div> {# Telefon için ikon #}
+            </div>
+
+            <div class="input-group">
+                <input type="text" id="tc_no" name="tc_no" placeholder="TC Kimlik No (11 haneli)" required pattern="[0-9]{11}" title="TC Kimlik No 11 haneli olmalı ve sadece rakamlardan oluşmalıdır.">
+                <div class="input-feedback-icon"></div>
+            </div>
+            <div class="input-group">
+                <input type="date" id="dogum_tarihi" name="dogum_tarihi" placeholder="Doğum Tarihi" required>
+                <div class="input-feedback-icon"></div>
+            </div>
+            <div class="input-group">
+                <textarea id="adres" name="adres" placeholder="Adres"></textarea> {# Adres textarea #}
+                <div class="input-feedback-icon"></div>
+            </div>
             <button type="submit">Kayıt Ol</button>
         </form>
         <p>Zaten hesabınız var? <a href="/giris">Giriş Yapın</a></p>
@@ -38,14 +79,16 @@
         // Şifre gücü kontrolü için JavaScript
         const passwordInput = document.getElementById('sifre');
         const passwordFeedback = document.getElementById('password-strength-feedback');
+        const passwordStrengthBar = document.getElementById('password-strength-bar');
+        const passwordIcon = passwordInput.closest('.input-group').querySelector('.input-feedback-icon');
 
         passwordInput.addEventListener('input', function() {
             const password = this.value;
-            let strength = 0;
+            let strength = 0; // 0-5 arası puan
             let feedbackText = '';
             let feedbackClass = '';
+            let barWidth = 0;
 
-            // Şifre gücü kriterleri
             const hasMinLength = password.length >= 8;
             const hasUpperCase = /[A-Z]/.test(password);
             const hasLowerCase = /[a-z]/.test(password);
@@ -61,50 +104,99 @@
             if (password.length === 0) {
                 feedbackText = '';
                 feedbackClass = '';
+                barWidth = 0;
+                passwordIcon.classList.remove('valid-icon', 'invalid-icon');
+                passwordIcon.textContent = '';
             } else if (strength < 3) {
                 feedbackText = 'Şifre çok zayıf! (En az 8 karakter, B/k harf, rakam, özel karakter içermeli)';
                 feedbackClass = 'weak';
+                barWidth = (strength / 5) * 100;
+                passwordIcon.classList.remove('valid-icon');
+                passwordIcon.classList.add('invalid-icon');
+                passwordIcon.textContent = '✕'; // Kırmızı çarpı
             } else if (strength < 5) {
                 feedbackText = 'Şifre orta güçlükte.';
                 feedbackClass = 'medium';
-            } else {
+                barWidth = (strength / 5) * 100;
+                passwordIcon.classList.remove('valid-icon');
+                passwordIcon.classList.add('invalid-icon');
+                passwordIcon.textContent = '✕'; // Kırmızı çarpı
+            } else { // strength === 5
                 feedbackText = 'Şifre güçlü!';
                 feedbackClass = 'strong';
+                barWidth = 100;
+                passwordIcon.classList.remove('invalid-icon');
+                passwordIcon.classList.add('valid-icon');
+                passwordIcon.textContent = '✓'; // Yeşil tik
             }
 
             passwordFeedback.textContent = feedbackText;
             passwordFeedback.className = 'password-feedback ' + feedbackClass;
+
+            passwordStrengthBar.style.width = barWidth + '%';
+            passwordStrengthBar.className = 'password-strength-bar ' + feedbackClass;
         });
 
-        // Telefon ve TC Kimlik No için görsel geri bildirim (tik animasyonu yerine kenarlık rengi)
-        const telefonInput = document.getElementById('telefon');
-        const tcNoInput = document.getElementById('tc_no');
+        // Genel input doğrulama ve ikon gösterme
+        const inputsToValidate = [
+            document.getElementById('ad'),
+            document.getElementById('soyad'),
+            document.getElementById('username'),
+            document.getElementById('email'),
+            document.getElementById('telefon'),
+            document.getElementById('tc_no'),
+            document.getElementById('dogum_tarihi'),
+            document.getElementById('adres')
+        ];
 
-        function applyValidationStyle(inputElement) {
-            if (inputElement.value.length === 0) { // Boşsa stil uygulama
+        function applyValidationAndIcon(inputElement) {
+            const iconElement = inputElement.closest('.input-group').querySelector('.input-feedback-icon');
+            if (!iconElement) return; // İkon elementi yoksa devam etme
+
+            if (inputElement.value.length === 0) {
                 inputElement.classList.remove('is-valid', 'is-invalid');
+                iconElement.classList.remove('valid-icon', 'invalid-icon');
+                iconElement.textContent = '';
             } else if (inputElement.checkValidity()) {
                 inputElement.classList.remove('is-invalid');
                 inputElement.classList.add('is-valid');
+                iconElement.classList.remove('invalid-icon');
+                iconElement.classList.add('valid-icon');
+                iconElement.textContent = '✓'; // Yeşil tik
             } else {
                 inputElement.classList.remove('is-valid');
                 inputElement.classList.add('is-invalid');
+                iconElement.classList.remove('valid-icon');
+                iconElement.classList.add('invalid-icon');
+                iconElement.textContent = '✕'; // Kırmızı çarpı
             }
         }
 
-        telefonInput.addEventListener('input', function() {
-            applyValidationStyle(this);
-        });
-        tcNoInput.addEventListener('input', function() {
-            applyValidationStyle(this);
+        inputsToValidate.forEach(input => {
+            if (input) { // Input elementi varsa
+                input.addEventListener('input', function() {
+                    applyValidationAndIcon(this);
+                });
+            }
         });
 
-        // Sayfa yüklendiğinde mevcut değerler için stil uygula (eğer formda kalmışsa)
+        // Telefon ülke kodu seçimi için JavaScript
+        const countryCodeSelect = document.getElementById('country-code');
+        const displayCountryCode = document.getElementById('display-country-code');
+
+        countryCodeSelect.addEventListener('change', function() {
+            displayCountryCode.textContent = this.value;
+        });
+
+        // Sayfa yüklendiğinde varsayılan değerler için stil ve ikon uygula
         document.addEventListener('DOMContentLoaded', function() {
-            applyValidationStyle(telefonInput);
-            applyValidationStyle(tcNoInput);
-            // Şifre inputu için de başlangıçta kontrol
-            passwordInput.dispatchEvent(new Event('input'));
+            inputsToValidate.forEach(input => {
+                if (input) {
+                    applyValidationAndIcon(input);
+                }
+            });
+            passwordInput.dispatchEvent(new Event('input')); // Şifre gücü geri bildirimini başlat
+            displayCountryCode.textContent = countryCodeSelect.value; // Varsayılan ülke kodunu göster
         });
     </script>
 </body>
