@@ -4,6 +4,8 @@
     <title>Kayıt Ol</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    {# intl-tel-input CSS #}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.css"/>
 </head>
 <body>
     <div class="container">
@@ -18,7 +20,7 @@
                 </ul>
             {% endif %}
         {% endwith %}
-        <form action="/kayit" method="POST">
+        <form id="registerForm" action="/kayit" method="POST"> {# Form'a ID eklendi #}
             <div class="input-group">
                 <input type="text" id="ad" name="ad" placeholder="Adınız" required>
                 <div class="input-feedback-icon"></div>
@@ -44,17 +46,10 @@
                 <div id="password-strength-bar" class="password-strength-bar"></div>
             </div>
             
-            {# New structure for phone number #}
-            <div class="phone-input-group input-group">
-                <select id="country-code" class="country-code-select">
-                    <option value="+90" selected>🇹🇷 +90</option>
-                    <option value="+1">🇺🇸 +1</option>
-                    <option value="+44">🇬🇧 +44</option>
-                    <option value="+49">🇩🇪 +49</option>
-                    {# More country codes can be added #}
-                </select>
-                <input type="tel" id="telefon" name="telefon" placeholder="Telefon Numarası" required pattern="[0-9]{10,15}" title="Telefon numarası sadece rakamlardan oluşmalı ve 10 ile 15 hane arasında olmalıdır.">
-                <div class="input-feedback-icon"></div> {# Icon for phone #}
+            {# Telefon numarası için intl-tel-input entegrasyonu #}
+            <div class="input-group phone-input-container"> {# Yeni container sınıfı #}
+                <input type="tel" id="telefon" name="telefon" placeholder="Telefon Numarası" required>
+                <div class="input-feedback-icon"></div> {# Telefon için ikon #}
             </div>
 
             <div class="input-group">
@@ -74,8 +69,19 @@
         <p>Zaten hesabınız var? <a href="/giris">Giriş Yapın</a></p>
     </div>
 
+    {# intl-tel-input JavaScript #}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
     <script>
-        // JavaScript for password strength check
+        // intl-tel-input başlatılıyor
+        const phoneInputField = document.getElementById("telefon");
+        const iti = window.intlTelInput(phoneInputField, {
+            utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
+            initialCountry: "tr", // Varsayılan ülke Türkiye
+            preferredCountries: ["tr", "us", "gb", "de"], // Tercih edilen ülkeler
+            separateDialCode: false, // Ülke kodunu inputtan ayırma (input içinde +90 vs. görünecek)
+        });
+
+        // Şifre gücü kontrolü için JavaScript
         const passwordInput = document.getElementById('sifre');
         const passwordFeedback = document.getElementById('password-strength-feedback');
         const passwordStrengthBarContainer = document.querySelector('.password-strength-bar-container');
@@ -144,15 +150,15 @@
             passwordStrengthBar.className = 'password-strength-bar ' + feedbackClass;
         });
 
-        // General input validation and icon display
+        // Genel input doğrulama ve ikon gösterme
         const inputsToValidate = [
             document.getElementById('ad'),
             document.getElementById('soyad'),
             document.getElementById('username'),
             document.getElementById('email'),
-            document.getElementById('telefon'),
+            // document.getElementById('telefon'), // Telefon intl-tel-input tarafından yönetiliyor
             document.getElementById('tc_no'),
-            document.getElementById('adres') // Birth date is handled separately
+            document.getElementById('adres') // Dogum tarihi ayrı ele alınacak
         ];
 
         function applyValidationAndIcon(inputElement) {
@@ -186,7 +192,34 @@
             }
         });
 
-        // Special validation and icon display for birth date
+        // Telefon numarası için özel doğrulama ve ikon gösterme (intl-tel-input ile)
+        phoneInputField.addEventListener('input', function() {
+            const inputElement = this;
+            const iconElement = inputElement.closest('.input-group').querySelector('.input-feedback-icon');
+            if (!iconElement) return;
+
+            if (iti.isValidNumber()) {
+                inputElement.classList.remove('is-invalid');
+                inputElement.classList.add('is-valid');
+                iconElement.classList.remove('invalid-icon');
+                iconElement.classList.add('valid-icon');
+                iconElement.textContent = '✓';
+            } else {
+                inputElement.classList.remove('is-valid');
+                inputElement.classList.add('is-invalid');
+                iconElement.classList.remove('valid-icon');
+                iconElement.classList.add('invalid-icon');
+                iconElement.textContent = '✕';
+            }
+            if (inputElement.value.length === 0) { // Boşsa ikonu kaldır
+                inputElement.classList.remove('is-valid', 'is-invalid');
+                iconElement.classList.remove('valid-icon', 'invalid-icon');
+                iconElement.textContent = '';
+            }
+        });
+
+
+        // Doğum tarihi için özel doğrulama ve ikon gösterme
         const dogumTarihiInput = document.getElementById('dogum_tarihi');
 
         function validateDogumTarihi() {
@@ -239,25 +272,47 @@
         dogumTarihiInput.addEventListener('input', validateDogumTarihi);
         dogumTarihiInput.addEventListener('change', validateDogumTarihi); // Check when date picker changes
 
-        // JavaScript for phone country code selection
-        const countryCodeSelect = document.getElementById('country-code');
-        // displayCountryCode span is removed, no need for its JS part
-
-        countryCodeSelect.addEventListener('change', function() {
-            // The select element now directly displays the country code and flag
-        });
-
-        // Apply styles and icons for default values on page load
+        // Sayfa yüklendiğinde varsayılan değerler için stil ve ikon uygula
         document.addEventListener('DOMContentLoaded', function() {
             inputsToValidate.forEach(input => {
                 if (input) {
                     applyValidationAndIcon(input);
                 }
             });
-            // passwordInput.dispatchEvent(new Event('input')); // Removed as bar is hidden initially
-            // displayCountryCode.textContent = countryCodeSelect.value; // Removed
+            // Initial validation for phone number
+            phoneInputField.dispatchEvent(new Event('input')); 
+            passwordInput.dispatchEvent(new Event('input')); // Şifre gücü geri bildirimini başlat (başlangıçta gizli olacak)
             validateDogumTarihi(); // Initial validation for birth date
         });
+
+        // Form gönderilmeden önce telefon numarasını uluslararası formata çevir
+        const registerForm = document.getElementById('registerForm');
+        registerForm.addEventListener('submit', function(event) {
+            if (iti.isValidNumber()) {
+                // Telefon numarasını uluslararası formata ayarla
+                phoneInputField.value = iti.getNumber();
+            } else {
+                // Eğer numara geçerli değilse, formu göndermeyi engelle ve hata göster
+                // Bu durum zaten JS validasyonunda yakalanmalı ama ek bir güvenlik katmanı
+                event.preventDefault();
+                flash('Lütfen geçerli bir telefon numarası giriniz.', 'error'); // Flask flash mesajı gibi göster
+                phoneInputField.focus();
+            }
+        });
+
+        // Basit bir flash mesaj fonksiyonu (Flask'ın flash'ı gibi çalışmaz, sadece örnek)
+        function flash(message, category) {
+            const flashesDiv = document.querySelector('.flashes');
+            if (flashesDiv) {
+                const li = document.createElement('li');
+                li.className = category;
+                li.textContent = message;
+                flashesDiv.appendChild(li);
+                setTimeout(() => {
+                    li.remove();
+                }, 5000); // 5 saniye sonra kaldır
+            }
+        }
     </script>
 </body>
 </html>
