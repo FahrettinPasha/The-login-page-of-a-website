@@ -1,10 +1,12 @@
- Flask
+flask_mail
+
+Flask
 
 Flask-SQLAlchemy
 
 Werkzeug
 
-Jinja2==
+Jinja2
 
 itsdangerous
 
