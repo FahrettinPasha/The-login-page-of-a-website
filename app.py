@@ -49,19 +49,26 @@ class Kullanici(db.Model):
 def rastgele_kod():
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
 
-# Check password strength
+# Check password strength - MODIFIED TO ACCEPT MEDIUM STRENGTH
 def check_password_strength(password):
-    if len(password) < 8:
-        return "Şifre en az 8 karakter olmalıdır."
-    if not re.search(r"[A-Z]", password):
-        return "Şifre en az bir büyük harf içermelidir."
-    if not re.search(r"[a-z]", password):
-        return "Şifre en az bir küçük harf içermelidir."
-    if not re.search(r"[0-9]", password):
-        return "Şifre en az bir rakam içermelidir."
-    if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
-        return "Şifre en az bir özel karakter (!@#$%^&*(),.?) içermelidir."
-    return None # Returns None if password is strong enough
+    score = 0
+    if len(password) >= 8:
+        score += 1
+    if re.search(r"[A-Z]", password):
+        score += 1
+    if re.search(r"[a-z]", password):
+        score += 1
+    if re.search(r"[0-9]", password):
+        score += 1
+    if re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
+        score += 1
+
+    # If score is less than 3, it's considered too weak
+    if score < 3:
+        return "Şifreniz çok zayıf. En az 3 farklı kriteri (minimum 8 karakter, büyük harf, küçük harf, rakam, özel karakter) karşılamalısınız."
+    
+    # If score is 3, 4, or 5, it's acceptable (medium or strong)
+    return None
 
 # Function to send verification email
 def send_verification_email(user_email, verification_code):
@@ -148,7 +155,7 @@ def kayit():
         today = date.today()
         eighteen_years_ago = today.replace(year=today.year - 18)
         if dogum_tarihi > eighteen_years_ago:
-            flash('Kayıt olmak için en az 18 yaşında olmalısınız.', 'error')
+            flash('Kayıt olmak için en least 18 yaşında olmalısınız.', 'error')
             return redirect(url_for('index'))
 
     except ValueError:
@@ -176,6 +183,7 @@ def kayit():
         tc_no=tc_no,
         adres=adres,
         dogum_tarihi=dogum_tarihi,
+        dogrulandi_mi=False, # Ensure it's False for new registrations
         dogrulama_kodu=rastgele_kod(),
         kod_zaman=datetime.now()
     )
