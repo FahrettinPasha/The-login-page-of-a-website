@@ -18,8 +18,8 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'your mail=D'  # Your GMAIL address
-app.config['MAIL_PASSWORD'] = 'your Google app password =D'      # Your Google App Password
+app.config['MAIL_USERNAME'] = 'karacemalopsiyonel@gmail.com'  # Your GMAIL address
+app.config['MAIL_PASSWORD'] = 'yjvf wjii iofc jnwo'      # Your Google App Password
 
 mail = Mail(app)
 db = SQLAlchemy(app)
@@ -102,7 +102,7 @@ def send_password_reset_email(user_email, token):
 def index():
     return render_template('register.html')
 
-# Registration Process
+# Registration Process - MODIFIED TO RETAIN FORM DATA
 @app.route('/kayit', methods=['POST'])
 def kayit():
     veri = request.form
@@ -116,32 +116,46 @@ def kayit():
     adres = veri.get('adres', '').strip()
     dogum_tarihi_str = veri.get('dogum_tarihi', '').strip()
 
+    # Store form data to pass back to template in case of error
+    form_data = {
+        'ad': ad,
+        'soyad': soyad,
+        'username': username,
+        'email': email,
+        'telefon': telefon,
+        'tc_no': tc_no,
+        'adres': adres,
+        'dogum_tarihi': dogum_tarihi_str # Pass as string to retain value in date input
+    }
+
     # Server-side validation
     if not ad or not soyad:
         flash('Ad ve Soyad boş bırakılamaz.', 'error')
-        return redirect(url_for('index'))
-    # Removed minlength validation for username from server-side
+        return render_template('register.html', form_data=form_data)
     if not username:
         flash('Kullanıcı adı boş bırakılamaz.', 'error')
-        return redirect(url_for('index'))
+        return render_template('register.html', form_data=form_data)
     if not email or '@' not in email or '.' not in email:
         flash('Geçerli bir e-posta adresi giriniz.', 'error')
-        return redirect(url_for('index'))
+        return render_template('register.html', form_data=form_data)
     
     # Password strength check
     password_strength_error = check_password_strength(sifre)
     if password_strength_error:
         flash(password_strength_error, 'error')
-        return redirect(url_for('index'))
+        return render_template('register.html', form_data=form_data)
 
     # Phone number validation
-    if not telefon or not telefon.isdigit() or not (10 <= len(telefon) <= 15):
+    # intl-tel-input already sends a valid international number if it's valid,
+    # but basic digit and length check is good for server-side
+    if not telefon or not telefon.replace('+', '').isdigit() or not (10 <= len(telefon.replace('+', '')) <= 15):
         flash('Geçerli bir telefon numarası giriniz (sadece rakamlar, 10-15 hane arası).', 'error')
-        return redirect(url_for('index'))
+        return render_template('register.html', form_data=form_data)
+
     # TC ID number validation
     if not tc_no or not tc_no.isdigit() or len(tc_no) != 11:
         flash('TC Kimlik No 11 haneli ve sadece rakamlardan oluşmalıdır.', 'error')
-        return redirect(url_for('index'))
+        return render_template('register.html', form_data=form_data)
     
     # Birth date validation
     try:
@@ -149,26 +163,26 @@ def kayit():
         # Prevent future dates
         if dogum_tarihi > datetime.now().date():
             flash('Doğum tarihi gelecekte olamaz.', 'error')
-            return redirect(url_for('index'))
+            return render_template('register.html', form_data=form_data)
 
         # 18 years old check
         today = date.today()
         eighteen_years_ago = today.replace(year=today.year - 18)
         if dogum_tarihi > eighteen_years_ago:
-            flash('Kayıt olmak için en least 18 yaşında olmalısınız.', 'error')
-            return redirect(url_for('index'))
+            flash('Kayıt olmak için en az 18 yaşında olmalısınız.', 'error')
+            return render_template('register.html', form_data=form_data)
 
     except ValueError:
         flash('Geçerli bir doğum tarihi giriniz.', 'error')
-        return redirect(url_for('index'))
+        return render_template('register.html', form_data=form_data)
 
     # Email and Username uniqueness check (case-insensitive)
     if Kullanici.query.filter_by(email=email).first():
         flash('Bu e-posta zaten kayıtlı!', 'error')
-        return redirect(url_for('index'))
+        return render_template('register.html', form_data=form_data)
     if Kullanici.query.filter_by(username=username).first():
         flash('Bu kullanıcı adı zaten alınmış!', 'error')
-        return redirect(url_for('index'))
+        return render_template('register.html', form_data=form_data)
 
     # Hash the password
     hashed_password = generate_password_hash(sifre)

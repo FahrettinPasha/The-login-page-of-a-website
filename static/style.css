@@ -29,11 +29,11 @@
 
 /* Input validation styles (border color) */
 input.is-valid {
-    border: 2px solid #28a745; /* Green border */
+    border: 2px solid #28a415 !important; /* Slightly darker green border for better visibility */
 }
 
 input.is-invalid {
-    border: 2px solid #dc3545; /* Red border */
+    border: 2px solid #dc3545 !important; /* Red border, !important to override intl-tel-input */
 }
 
 /* Password strength feedback text */
@@ -54,7 +54,7 @@ input.is-invalid {
 }
 
 .password-feedback.strong {
-    color: #28a745; /* Green */
+    color: #28a415; /* Green */
 }
 
 /* General form and container styles */
@@ -86,7 +86,7 @@ h1 {
 form {
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 25px; /* Increased gap between elements */
 }
 
 /* General group for input and icons */
@@ -94,16 +94,14 @@ form {
     position: relative; /* For positioning icons inside */
     display: flex; /* For side-by-side elements */
     align-items: center; /* Vertical alignment */
-    width: calc(100% - 20px); /* Container width, considering padding */
+    width: 100%; /* Container width */
     margin: 0 auto; /* To center */
-    z-index: 1; /* Keep above other elements */
 }
 
 /* Common styles for all input and textarea elements */
 input[type="text"],
 input[type="email"],
 input[type="password"],
-input[type="tel"],
 input[type="date"],
 textarea {
     flex-grow: 1; /* Input fills remaining space */
@@ -117,6 +115,7 @@ textarea {
     cursor: text; /* Indicate text input */
     z-index: 2; /* Ensure input is above icon */
     background-color: white; /* Define background color */
+    height: 40px; /* Fixed height given */
 }
 
 button[type="submit"] {
@@ -172,54 +171,72 @@ a:hover {
 textarea {
     resize: vertical; /* Vertically resizable */
     min-height: 120px; /* Increased minimum height */
+    height: auto; /* Height adjusts to content */
 }
 
-/* Styles for phone number input group */
-.phone-input-group {
+/* intl-tel-input specific styles */
+.phone-input-container {
     border: 1px solid #ddd; /* Own border */
     border-radius: 5px;
-    overflow: hidden;
-    width: calc(100% - 20px); /* Container width */
-    margin: 0 auto; /* To center */
+    width: 100%;
+    margin: 0 auto;
     z-index: 1; /* Keep above other elements */
+    height: 40px; /* Same height as other inputs */
+    display: flex;
+    align-items: center;
 }
 
-.phone-input-group select {
+/* intl-tel-input tarafından oluşturulan input */
+.iti__tel-input {
+    flex-grow: 1;
+    width: auto !important;
     padding: 10px;
-    border: none;
+    margin: 0;
+    border: none !important;
+    border-radius: 0;
+    box-sizing: border-box;
+    padding-right: 35px !important;
+    cursor: text;
+    z-index: 2;
+    background-color: white;
+    height: 100% !important;
+}
+
+/* Flag and country code selector */
+.iti__flag-container {
+    height: 100%;
+    border-radius: 5px 0 0 5px;
+    z-index: 2;
+    display: flex;
+    align-items: center;
     background-color: #f8f8f8;
     border-right: 1px solid #ddd;
-    border-radius: 0;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    cursor: pointer;
-    font-size: 1em;
+}
+
+.iti__selected-flag {
     height: 100%;
-    z-index: 2; /* Ensure select is above */
+    padding: 0 6px;
+    border-radius: 5px 0 0 5px;
+    display: flex;
+    align-items: center;
+}
+.iti__selected-flag:hover, .iti__selected-flag:focus {
+    background-color: #e6e6e6; /* Hover effect for flag */
 }
 
-.phone-input-group select:focus {
-    outline: none;
-}
-
-.phone-input-group input[type="tel"] {
-    flex-grow: 1;
-    border: none; /* Border handled by phone-input-group */
-    padding: 10px;
-    border-radius: 0;
-    width: auto;
-    margin: 0;
-    z-index: 2; /* Ensure input is above */
-}
-
-.phone-input-group input[type="tel"]:focus {
-    outline: none;
+/* Açılır menü (dropdown) için z-index */
+.iti__dropdown {
+    z-index: 99999999 !important; /* Z-index'i daha da artırıldı */
+    border-radius: 5px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    /* width ve left özellikleri kaldırıldı, kütüphane kendi konumlamasını yapsın */
+    box-sizing: border-box;
+    position: absolute;
 }
 
 /* Password Strength Bar Styles */
 .password-strength-bar-container {
-    width: calc(100% - 20px); /* Container width */
+    width: 100%;
     height: 8px;
     background-color: #e0e0e0;
     border-radius: 4px;
@@ -230,10 +247,10 @@ textarea {
 
 .password-strength-bar {
     height: 100%;
-    width: 0%; /* Empty initially */
-    background-color: #ccc; /* Default color */
+    width: 0%;
+    background-color: #ccc;
     border-radius: 4px;
-    transition: width 0.3s ease-in-out, background-color 0.3s ease-in-out; /* Animation */
+    transition: width 0.3s ease-in-out, background-color 0.3s ease-in-out;
 }
 
 .password-strength-bar.weak {
@@ -245,23 +262,28 @@ textarea {
 }
 
 .password-strength-bar.strong {
-    background-color: #28a745; /* Green */
+    background-color: #28a415; /* Green */
 }
 
 /* Input Side Tick/Cross Icon Styles */
 .input-feedback-icon {
     position: absolute;
-    right: 10px; /* Space on the right of the input */
+    right: 10px;
     font-size: 1.2em;
     line-height: 1;
     transition: opacity 0.3s ease-in-out;
-    opacity: 0; /* Hidden by default */
-    pointer-events: none; /* Very important! Prevents icon from blocking clicks */
-    z-index: 3; /* Ensure icon is above input and other elements (but not clickable) */
+    opacity: 0;
+    pointer-events: none;
+    z-index: 3;
+}
+
+/* Specific positioning for phone input's feedback icon */
+.phone-input-container .input-feedback-icon {
+    right: 35px;
 }
 
 .input-feedback-icon.valid-icon {
-    color: #28a745; /* Green tick */
+    color: #28a415; /* Green tick */
     opacity: 1;
 }
 

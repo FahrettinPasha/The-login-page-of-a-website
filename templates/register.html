@@ -22,19 +22,19 @@
         {% endwith %}
         <form id="registerForm" action="/kayit" method="POST"> {# Form'a ID eklendi #}
             <div class="input-group">
-                <input type="text" id="ad" name="ad" placeholder="Adınız" required>
+                <input type="text" id="ad" name="ad" placeholder="Adınız" required value="{{ form_data.ad if form_data else '' }}">
                 <div class="input-feedback-icon"></div>
             </div>
             <div class="input-group">
-                <input type="text" id="soyad" name="soyad" placeholder="Soyadınız" required>
+                <input type="text" id="soyad" name="soyad" placeholder="Soyadınız" required value="{{ form_data.soyad if form_data else '' }}">
                 <div class="input-feedback-icon"></div>
             </div>
             <div class="input-group">
-                <input type="text" id="username" name="username" placeholder="Kullanıcı Adı" required>
+                <input type="text" id="username" name="username" placeholder="Kullanıcı Adı" required value="{{ form_data.username if form_data else '' }}">
                 <div class="input-feedback-icon"></div>
             </div>
             <div class="input-group">
-                <input type="email" id="email" name="email" placeholder="E-posta" required>
+                <input type="email" id="email" name="email" placeholder="E-posta" required value="{{ form_data.email if form_data else '' }}">
                 <div class="input-feedback-icon"></div>
             </div>
             <div class="input-group">
@@ -48,7 +48,7 @@
             
             {# Telefon numarası için intl-tel-input entegrasyonu #}
             <div class="input-group phone-input-container"> {# Yeni container sınıfı #}
-                <input type="tel" id="telefon" name="telefon" placeholder="Telefon Numarası" required>
+                <input type="tel" id="telefon" name="telefon" placeholder="Telefon Numarası" required value="{{ form_data.telefon if form_data else '' }}">
                 <div class="input-feedback-icon"></div> {# Telefon için ikon #}
             </div>
 
@@ -57,11 +57,11 @@
                 <div class="input-feedback-icon"></div>
             </div>
             <div class="input-group">
-                <input type="date" id="dogum_tarihi" name="dogum_tarihi" placeholder="Doğum Tarihi" required>
+                <input type="date" id="dogum_tarihi" name="dogum_tarihi" placeholder="Doğum Tarihi" required value="{{ form_data.dogum_tarihi if form_data else '' }}">
                 <div class="input-feedback-icon"></div>
             </div>
             <div class="input-group">
-                <textarea id="adres" name="adres" placeholder="Adres"></textarea> {# Address textarea #}
+                <textarea id="adres" name="adres" placeholder="Adres">{{ form_data.adres if form_data else '' }}</textarea> {# Address textarea #}
                 <div class="input-feedback-icon"></div>
             </div>
             <button type="submit">Kayıt Ol</button>
@@ -79,7 +79,13 @@
             initialCountry: "tr", // Varsayılan ülke Türkiye
             preferredCountries: ["tr", "us", "gb", "de"], // Tercih edilen ülkeler
             separateDialCode: false, // Ülke kodunu inputtan ayırma (input içinde +90 vs. görünecek)
+            dropdownContainer: document.body, // Menüyü doğrudan body'ye ekle
         });
+
+        // Eğer telefon inputunda önceden doldurulmuş bir değer varsa, intl-tel-input'a bildir
+        if (phoneInputField.value) {
+            iti.setNumber(phoneInputField.value);
+        }
 
         // Şifre gücü kontrolü için JavaScript
         const passwordInput = document.getElementById('sifre');
