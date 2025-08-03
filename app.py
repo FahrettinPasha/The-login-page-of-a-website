@@ -18,8 +18,8 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = ''  # Your GMAIL address
-app.config['MAIL_PASSWORD'] = ''      # Your Google App Password
+app.config['MAIL_USERNAME'] = 'karacemalopsiyonel@gmail.com'  # Your GMAIL address
+app.config['MAIL_PASSWORD'] = 'yjvf wjii iofc jnwo'      # Your Google App Password
 
 mail = Mail(app)
 db = SQLAlchemy(app)
@@ -40,8 +40,8 @@ class Kullanici(db.Model):
     adres = db.Column(db.Text)
     dogum_tarihi = db.Column(db.Date, nullable=False)
     dogrulandi_mi = db.Column(db.Boolean, default=False)
-    dogrulama_kodu = db.Column(db.String(6))
-    kod_zaman = db.Column(db.DateTime)
+    dogrulama_kodu = db.Column(db.String(6)) # Bu alan aslında veritabanında saklanmayacak, sadece model tanımında kalabilir.
+    kod_zaman = db.Column(db.DateTime) # Bu alan da benzer şekilde veritabanında saklanmayacak.
     reset_token = db.Column(db.String(100), unique=True, nullable=True)
     reset_token_expiry = db.Column(db.DateTime, nullable=True)
 
@@ -49,7 +49,7 @@ class Kullanici(db.Model):
 def rastgele_kod():
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
 
-# Check password strength - MODIFIED TO ACCEPT MEDIUM STRENGTH
+# Check password strength
 def check_password_strength(password):
     score = 0
     if len(password) >= 8:
@@ -102,7 +102,7 @@ def send_password_reset_email(user_email, token):
 def index():
     return render_template('register.html')
 
-# Registration Process - MODIFIED TO RETAIN FORM DATA
+# Registration Process - User is NOT saved to DB yet
 @app.route('/kayit', methods=['POST'])
 def kayit():
     veri = request.form
@@ -116,134 +116,134 @@ def kayit():
     adres = veri.get('adres', '').strip()
     dogum_tarihi_str = veri.get('dogum_tarihi', '').strip()
 
-    # Store form data to pass back to template in case of error
-    form_data = {
-        'ad': ad,
-        'soyad': soyad,
-        'username': username,
-        'email': email,
-        'telefon': telefon,
-        'tc_no': tc_no,
-        'adres': adres,
-        'dogum_tarihi': dogum_tarihi_str # Pass as string to retain value in date input
-    }
-
     # Server-side validation
     if not ad or not soyad:
         flash('Ad ve Soyad boş bırakılamaz.', 'error')
-        return render_template('register.html', form_data=form_data)
+        return redirect(url_for('index'))
     if not username:
         flash('Kullanıcı adı boş bırakılamaz.', 'error')
-        return render_template('register.html', form_data=form_data)
+        return redirect(url_for('index'))
     if not email or '@' not in email or '.' not in email:
         flash('Geçerli bir e-posta adresi giriniz.', 'error')
-        return render_template('register.html', form_data=form_data)
+        return redirect(url_for('index'))
     
-    # Password strength check
     password_strength_error = check_password_strength(sifre)
     if password_strength_error:
         flash(password_strength_error, 'error')
-        return render_template('register.html', form_data=form_data)
+        return redirect(url_for('index'))
 
-    # Phone number validation
-    # intl-tel-input already sends a valid international number if it's valid,
-    # but basic digit and length check is good for server-side
-    if not telefon or not telefon.replace('+', '').isdigit() or not (10 <= len(telefon.replace('+', '')) <= 15):
+    if not telefon or not telefon.isdigit() or not (10 <= len(telefon) <= 15):
         flash('Geçerli bir telefon numarası giriniz (sadece rakamlar, 10-15 hane arası).', 'error')
-        return render_template('register.html', form_data=form_data)
-
-    # TC ID number validation
+        return redirect(url_for('index'))
     if not tc_no or not tc_no.isdigit() or len(tc_no) != 11:
         flash('TC Kimlik No 11 haneli ve sadece rakamlardan oluşmalıdır.', 'error')
-        return render_template('register.html', form_data=form_data)
+        return redirect(url_for('index'))
     
-    # Birth date validation
     try:
         dogum_tarihi = datetime.strptime(dogum_tarihi_str, '%Y-%m-%d').date()
-        # Prevent future dates
         if dogum_tarihi > datetime.now().date():
             flash('Doğum tarihi gelecekte olamaz.', 'error')
-            return render_template('register.html', form_data=form_data)
+            return redirect(url_for('index'))
 
-        # 18 years old check
         today = date.today()
         eighteen_years_ago = today.replace(year=today.year - 18)
         if dogum_tarihi > eighteen_years_ago:
             flash('Kayıt olmak için en az 18 yaşında olmalısınız.', 'error')
-            return render_template('register.html', form_data=form_data)
+            return redirect(url_for('index'))
 
     except ValueError:
         flash('Geçerli bir doğum tarihi giriniz.', 'error')
-        return render_template('register.html', form_data=form_data)
+        return redirect(url_for('index'))
 
-    # Email and Username uniqueness check (case-insensitive)
+    # Check if email or username already exists (verified or unverified)
     if Kullanici.query.filter_by(email=email).first():
         flash('Bu e-posta zaten kayıtlı!', 'error')
-        return render_template('register.html', form_data=form_data)
+        return redirect(url_for('index'))
     if Kullanici.query.filter_by(username=username).first():
         flash('Bu kullanıcı adı zaten alınmış!', 'error')
-        return render_template('register.html', form_data=form_data)
+        return redirect(url_for('index'))
 
-    # Hash the password
+    # Store pending registration data in session
     hashed_password = generate_password_hash(sifre)
+    verification_code = rastgele_kod()
+    code_time = datetime.now()
 
-    yeni_kullanici = Kullanici(
-        ad=ad,
-        soyad=soyad,
-        username=username,
-        email=email,
-        sifre=hashed_password,
-        telefon=telefon,
-        tc_no=tc_no,
-        adres=adres,
-        dogum_tarihi=dogum_tarihi,
-        dogrulandi_mi=False, # Ensure it's False for new registrations
-        dogrulama_kodu=rastgele_kod(),
-        kod_zaman=datetime.now()
-    )
+    session['pending_registration'] = {
+        'ad': ad,
+        'soyad': soyad,
+        'username': username,
+        'email': email,
+        'sifre': hashed_password, # Store hashed password
+        'telefon': telefon,
+        'tc_no': tc_no,
+        'adres': adres,
+        'dogum_tarihi': dogum_tarihi_str, # Store as string to avoid serialization issues
+        'dogrulama_kodu': verification_code,
+        'kod_zaman': code_time.isoformat() # Store as ISO format string
+    }
     
-    db.session.add(yeni_kullanici)
-    db.session.commit()
+    send_verification_email(email, verification_code)
     
-    send_verification_email(yeni_kullanici.email, yeni_kullanici.dogrulama_kodu)
-    
-    session['dogrulama_email'] = email
+    session['dogrulama_email'] = email # Keep for verify.html display
     flash('Kaydınız başarıyla alındı. Lütfen e-postanıza gönderilen doğrulama kodunu girin.', 'success')
     return redirect(url_for('dogrulama_sayfasi'))
 
 # Verification Page
 @app.route('/dogrulama')
 def dogrulama_sayfasi():
-    if 'dogrulama_email' not in session:
-        flash('Doğrulama işlemi için e-posta adresi bulunamadı veya oturum süresi doldu. Lütfen tekrar kayıt olun.', 'info')
+    if 'dogrulama_email' not in session or 'pending_registration' not in session:
+        flash('Doğrulama işlemi için bilgiler bulunamadı veya oturum süresi doldu. Lütfen tekrar kayıt olun.', 'info')
         return redirect(url_for('index'))
     return render_template('verify.html', email=session.get('dogrulama_email', ''))
 
-# Verification Process
+# Verification Process - User is saved to DB ONLY IF verification is successful
 @app.route('/dogrula', methods=['POST'])
 def dogrula():
-    email = session.get('dogrulama_email')
-    if not email:
-        flash('Doğrulama için e-posta bulunamadı. Lütfen tekrar kayıt olun.', 'error')
+    pending_data = session.get('pending_registration')
+    if not pending_data:
+        flash('Doğrulama için bilgiler bulunamadı. Lütfen tekrar kayıt olun.', 'error')
         return redirect(url_for('index'))
     
-    kullanici = Kullanici.query.filter_by(email=email).first()
-    if not kullanici:
-        flash('Kullanıcı bulunamadı.', 'error')
-        return redirect(url_for('index'))
+    email = pending_data['email']
+    verification_code = pending_data['dogrulama_kodu']
+    code_time = datetime.fromisoformat(pending_data['kod_zaman'])
     
     # Code expiration check (10 minutes)
-    if datetime.now() > kullanici.kod_zaman + timedelta(minutes=10):
+    if datetime.now() > code_time + timedelta(minutes=10):
         flash('Kod süresi doldu! Lütfen tekrar kayıt olun.', 'error')
-        session.pop('dogrulama_email', None) # Clear expired code
+        session.pop('pending_registration', None)
+        session.pop('dogrulama_email', None)
         return redirect(url_for('index'))
     
-    if request.form['kod'] == kullanici.dogrulama_kodu:
-        kullanici.dogrulandi_mi = True
-        db.session.commit()
-        session.pop('dogrulama_email', None)
-        flash('Hesabınız başarıyla doğrulandı! Giriş yapabilirsiniz.', 'success')
-        return redirect(url_for('giris_sayfasi'))
+    if request.form['kod'] == verification_code:
+        # Create and save user to DB only AFTER successful verification
+        try:
+            dogum_tarihi_obj = datetime.strptime(pending_data['dogum_tarihi'], '%Y-%m-%d').date()
+            yeni_kullanici = Kullanici(
+                ad=pending_data['ad'],
+                soyad=pending_data['soyad'],
+                username=pending_data['username'],
+                email=pending_data['email'],
+                sifre=pending_data['sifre'], # Already hashed
+                telefon=pending_data['telefon'],
+                tc_no=pending_data['tc_no'],
+                adres=pending_data['adres'],
+                dogum_tarihi=dogum_tarihi_obj,
+                dogrulandi_mi=True # Mark as verified
+            )
+            db.session.add(yeni_kullanici)
+            db.session.commit()
+            flash('Hesabınız başarıyla doğrulandı! Giriş yapabilirsiniz.', 'success')
+            
+            # Clear pending data from session
+            session.pop('pending_registration', None)
+            session.pop('dogrulama_email', None)
+            return redirect(url_for('giris_sayfasi'))
+        except Exception as e:
+            db.session.rollback()
+            print(f"VERİTABANI KAYDETME HATASI (Doğrulama Sonrası): {e}")
+            flash("Kayıt sırasında bir hata oluştu. Lütfen tekrar deneyin.", 'error')
+            return redirect(url_for('index'))
     else:
         flash('Geçersiz doğrulama kodu!', 'error')
         return redirect(url_for('dogrulama_sayfasi'))
@@ -251,27 +251,27 @@ def dogrula():
 # Resend Verification Code
 @app.route('/kodu_yeniden_gonder', methods=['GET'])
 def resend_verification_code():
-    email = session.get('dogrulama_email')
-    if not email:
-        flash('Doğrulama kodu göndermek için bir e-posta adresi bulunamadı. Lütfen tekrar kayıt olun.', 'error')
+    pending_data = session.get('pending_registration')
+    if not pending_data:
+        flash('Doğrulama kodu göndermek için bilgiler bulunamadı. Lütfen tekrar kayıt olun.', 'error')
         return redirect(url_for('index'))
     
-    kullanici = Kullanici.query.filter_by(email=email).first()
-    if not kullanici:
-        flash('Kullanıcı bulunamadı.', 'error')
-        return redirect(url_for('index'))
-
-    if kullanici.dogrulandi_mi:
+    # Check if a verified user with this email already exists (edge case)
+    if Kullanici.query.filter_by(email=pending_data['email'], dogrulandi_mi=True).first():
         flash('Hesabınız zaten doğrulanmış. Giriş yapabilirsiniz.', 'info')
+        session.pop('pending_registration', None)
         session.pop('dogrulama_email', None)
         return redirect(url_for('giris_sayfasi'))
     
-    # Generate new code and update time
-    kullanici.dogrulama_kodu = rastgele_kod()
-    kullanici.kod_zaman = datetime.now()
-    db.session.commit()
+    # Generate new code and update time in session
+    new_verification_code = rastgele_kod()
+    new_code_time = datetime.now()
+    
+    pending_data['dogrulama_kodu'] = new_verification_code
+    pending_data['kod_zaman'] = new_code_time.isoformat()
+    session['pending_registration'] = pending_data # Update session
 
-    send_verification_email(kullanici.email, kullanici.dogrulama_kodu)
+    send_verification_email(pending_data['email'], new_verification_code)
     flash('Yeni doğrulama kodu e-posta adresinize gönderildi.', 'success')
     return redirect(url_for('dogrulama_sayfasi'))
 
@@ -307,7 +307,7 @@ def giris_yap():
                 return redirect(url_for('dashboard'))
             else:
                 flash('Hesabınız doğrulanmamış! Lütfen e-postanızı kontrol edin ve doğrulayın.', 'error')
-                session['dogrulama_email'] = kullanici.email
+                session['dogrulama_email'] = kullanici.email # Set email for verification page
                 return redirect(url_for('dogrulama_sayfasi'))
         else:
             flash('Geçersiz şifre!', 'error')
