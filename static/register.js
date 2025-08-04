@@ -271,14 +271,23 @@ const inputsToValidate = [
     document.getElementById('telefon'),
     document.getElementById('tc_no'),
     document.getElementById('adres'),
-    document.getElementById('rol') // Rol seçim alanı eklendi
+    document.getElementById('rol'), // Rol seçim alanı eklendi
+    document.getElementById('cinsiyet') // Cinsiyet seçim alanı eklendi
 ];
 
 function applyValidationAndIcon(inputElement) {
     const iconElement = inputElement.closest('.input-group').querySelector('.input-feedback-icon');
     if (!iconElement) return;
 
-    if (inputElement.value.length === 0 || (inputElement.tagName === 'SELECT' && inputElement.value === '')) {
+    // Select elementler için özel boş değer kontrolü
+    if (inputElement.tagName === 'SELECT' && inputElement.value === '') {
+        inputElement.classList.remove('is-valid', 'is-invalid');
+        iconElement.classList.remove('valid-icon', 'invalid-icon');
+        iconElement.textContent = '';
+        return;
+    }
+
+    if (inputElement.value.length === 0) {
         inputElement.classList.remove('is-valid', 'is-invalid');
         iconElement.classList.remove('valid-icon', 'invalid-icon');
         iconElement.textContent = '';
@@ -469,6 +478,15 @@ registerForm.addEventListener('submit', function(event) {
         event.preventDefault();
         flash('Lütfen kullanıcı rolünüzü seçin.', 'error');
         rolSelect.focus();
+        return;
+    }
+
+    // Cinsiyet seçimi kontrolü
+    const cinsiyetSelect = document.getElementById('cinsiyet');
+    if (cinsiyetSelect.value === '') {
+        event.preventDefault();
+        flash('Lütfen cinsiyetinizi seçin.', 'error');
+        cinsiyetSelect.focus();
         return;
     }
 });

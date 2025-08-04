@@ -31,7 +31,7 @@ db = SQLAlchemy(app)
 # Tokenizer object for password reset links
 s = URLSafeTimedSerializer(app.config['SECRET_KEY'])
 
-# User Model - ROL SÜTUNU EKLENDİ
+# User Model - CİNSİYET SÜTUNU EKLENDİ
 class Kullanici(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     ad = db.Column(db.String(50), nullable=False)
@@ -49,6 +49,7 @@ class Kullanici(db.Model):
     reset_token = db.Column(db.String(100), unique=True, nullable=True)
     reset_token_expiry = db.Column(db.DateTime, nullable=True)
     rol = db.Column(db.String(20), nullable=False, default='normal') # 'normal' veya 'sürücü'
+    cinsiyet = db.Column(db.String(10), nullable=False) # 'erkek', 'kadın', 'diğer'
 
 # Generate a random 6-digit code
 def rastgele_kod():
@@ -103,10 +104,10 @@ def send_password_reset_email(user_email, token):
 # Home Page (Registration Form)
 @app.route('/')
 def index():
-    # form_data'ya varsayılan rolü ekle
-    return render_template('register.html', form_data={'rol': 'normal'}) 
+    # form_data'ya varsayılan rolü ve boş cinsiyeti ekle
+    return render_template('register.html', form_data={'rol': 'normal', 'cinsiyet': ''}) 
 
-# Registration Process - ROL BİLGİSİ ALINDI VE KONTROL EDİLDİ
+# Registration Process - CİNSİYET BİLGİSİ ALINDI VE KONTROL EDİLDİ
 @app.route('/kayit', methods=['POST'])
 def kayit():
     veri = request.form
@@ -120,7 +121,8 @@ def kayit():
     tc_no = veri.get('tc_no', '').strip()
     adres = veri.get('adres', '').strip()
     dogum_tarihi_str = veri.get('dogum_tarihi', '').strip()
-    rol = veri.get('rol', 'normal').strip().lower() # Rol bilgisini al, varsayılan 'normal'
+    rol = veri.get('rol', 'normal').strip().lower()
+    cinsiyet = veri.get('cinsiyet', '').strip().lower() # Cinsiyet bilgisini al
     recaptcha_response = veri.get('g-recaptcha-response')
 
     # Store form data to pass back to template in case of error (password excluded)
@@ -133,12 +135,18 @@ def kayit():
         'tc_no': tc_no,
         'adres': adres,
         'dogum_tarihi': dogum_tarihi_str,
-        'rol': rol # Rol bilgisini de form_data'ya ekle
+        'rol': rol,
+        'cinsiyet': cinsiyet # Cinsiyet bilgisini de form_data'ya ekle
     }
 
     # Rol kontrolü
     if rol not in ['normal', 'sürücü']:
         flash('Geçersiz kullanıcı rolü seçimi.', 'error')
+        return render_template('register.html', form_data=form_data)
+
+    # Cinsiyet kontrolü - SADECE 'erkek' ve 'kadın' kabul edildi
+    if cinsiyet not in ['erkek', 'kadın']:
+        flash('Lütfen geçerli bir cinsiyet seçimi yapın (Erkek veya Kadın).', 'error')
         return render_template('register.html', form_data=form_data)
 
     # reCAPTCHA doğrulaması
@@ -148,7 +156,7 @@ def kayit():
     
     recaptcha_verify_url = 'https://www.google.com/recaptcha/api/siteverify'
     recaptcha_payload = {
-        'secret': app.config['6LfFLporAAAAAFGAyffTJYOAjuFCa2MwxEAw3On6'],
+        'secret': app.config['RECAPTCHA_SECRET_KEY'],
         'response': recaptcha_response,
         'remoteip': request.remote_addr
     }
@@ -186,7 +194,7 @@ def kayit():
         flash(password_strength_error, 'error')
         return render_template('register.html', form_data=form_data)
 
-    # Phone number validation (MODIFIED TO HANDLE '+')
+    # Phone number validation
     clean_telefon = telefon.replace('+', '')
     if not clean_telefon.isdigit() or not (10 <= len(clean_telefon) <= 15):
         flash('Geçerli bir telefon numarası giriniz (sadece rakamlar, 10-15 hane arası).', 'error')
@@ -220,10 +228,9 @@ def kayit():
 
     if existing_user_by_email:
         if not existing_user_by_email.dogrulandi_mi:
-            # User exists but not verified, resend code and redirect to verification
+            # User exists but not verified, resend code and update user info
             existing_user_by_email.dogrulama_kodu = rastgele_kod()
             existing_user_by_email.kod_zaman = datetime.now()
-            # Mevcut doğrulanmamış kullanıcının diğer bilgilerini formdan gelenle güncelle
             existing_user_by_email.ad = ad
             existing_user_by_email.soyad = soyad
             existing_user_by_email.username = username
@@ -232,7 +239,8 @@ def kayit():
             existing_user_by_email.tc_no = tc_no
             existing_user_by_email.adres = adres
             existing_user_by_email.dogum_tarihi = dogum_tarihi
-            existing_user_by_email.rol = rol # Rolü de güncelle
+            existing_user_by_email.rol = rol
+            existing_user_by_email.cinsiyet = cinsiyet # Cinsiyeti de güncelle
             db.session.commit()
             send_verification_email(existing_user_by_email.email, existing_user_by_email.dogrulama_kodu)
             session['dogrulama_email'] = existing_user_by_email.email
@@ -244,10 +252,9 @@ def kayit():
     
     if existing_user_by_username:
         if not existing_user_by_username.dogrulandi_mi:
-            # User exists but not verified, resend code and redirect to verification
+            # User exists but not verified, resend code and update user info
             existing_user_by_username.dogrulama_kodu = rastgele_kod()
             existing_user_by_username.kod_zaman = datetime.now()
-            # Mevcut doğrulanmamış kullanıcının diğer bilgilerini formdan gelenle güncelle
             existing_user_by_username.ad = ad
             existing_user_by_username.soyad = soyad
             existing_user_by_username.email = email
@@ -256,7 +263,8 @@ def kayit():
             existing_user_by_username.tc_no = tc_no
             existing_user_by_username.adres = adres
             existing_user_by_username.dogum_tarihi = dogum_tarihi
-            existing_user_by_username.rol = rol # Rolü de güncelle
+            existing_user_by_username.rol = rol
+            existing_user_by_username.cinsiyet = cinsiyet # Cinsiyeti de güncelle
             db.session.commit()
             send_verification_email(existing_user_by_username.email, existing_user_by_username.dogrulama_kodu)
             session['dogrulama_email'] = existing_user_by_username.email
@@ -282,7 +290,8 @@ def kayit():
         dogrulandi_mi=False, # Initially False, will be True after verification
         dogrulama_kodu=rastgele_kod(),
         kod_zaman=datetime.now(),
-        rol=rol # Rolü kaydet
+        rol=rol,
+        cinsiyet=cinsiyet # Cinsiyeti kaydet
     )
     
     db.session.add(yeni_kullanici)
@@ -323,9 +332,6 @@ def dogrula():
     # Code expiration check (10 minutes)
     if datetime.now() > kullanici.kod_zaman + timedelta(minutes=10):
         flash('Kod süresi doldu! Lütfen tekrar kayıt olun.', 'error')
-        # Süresi dolan kullanıcıyı silmek yerine, sadece doğrulama sürecini sıfırla
-        # db.session.delete(kullanici) # Bu satır kaldırıldı
-        # db.session.commit()
         session.pop('dogrulama_email', None) # Clear expired code
         return redirect(url_for('index'))
     

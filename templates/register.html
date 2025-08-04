@@ -392,12 +392,22 @@
                 <div class="input-feedback-icon"></div>
             </div>
 
-            {# Kullanıcı Rolü Seçim Alanı Eklendi #}
+            {# Kullanıcı Rolü Seçim Alanı #}
             <div class="input-group">
                 <select id="rol" name="rol" required>
-                    <option value="" disabled selected>Kullanıcı Rolü Seçin</option>
+                    <option value="" disabled {% if not form_data.rol %}selected{% endif %}>Kullanıcı Rolü Seçin</option>
                     <option value="normal" {% if form_data.rol == 'normal' %}selected{% endif %}>Normal Kullanıcı</option>
                     <option value="sürücü" {% if form_data.rol == 'sürücü' %}selected{% endif %}>Sürücü</option>
+                </select>
+                <div class="input-feedback-icon"></div>
+            </div>
+
+            {# Cinsiyet Seçim Alanı Güncellendi - SADECE KADIN VE ERKEK #}
+            <div class="input-group">
+                <select id="cinsiyet" name="cinsiyet" required>
+                    <option value="" disabled {% if not form_data.cinsiyet %}selected{% endif %}>Cinsiyet Seçin</option>
+                    <option value="erkek" {% if form_data.cinsiyet == 'erkek' %}selected{% endif %}>Erkek</option>
+                    <option value="kadın" {% if form_data.cinsiyet == 'kadın' %}selected{% endif %}>Kadın</option>
                 </select>
                 <div class="input-feedback-icon"></div>
             </div>
@@ -411,7 +421,7 @@
             <input type="hidden" id="longitude" name="longitude"> {# Boylam bilgisi için gizli input #}
 
             {# reCAPTCHA widget'ı buraya eklendi #}
-            <div class="g-recaptcha" data-sitekey="6LfFLporAAAAAO_ShanvYihWcS4j7NxCZQznJfGr"></div>
+            <div class="g-recaptcha" data-sitekey="YOUR_RECAPTCHA_SITE_KEY"></div>
             <br/> {# reCAPTCHA'nın altında biraz boşluk bırakmak için #}
 
             <button type="submit">Kayıt Ol</button>
