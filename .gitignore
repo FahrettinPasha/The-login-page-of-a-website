@@ -1,0 +1,14 @@
+# Sanal ortam klasörü
+venv/
+
+# Python derlenmiş dosyaları
+__pycache__/
+*.pyc
+
+# Veritabanı dosyaları
+instance/
+*.db
+
+# Gereksiz requirements dosyaları (eğer varsa)
+REQUIREMENTS.md
+requirements.txt.1

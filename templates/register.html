@@ -46,7 +46,8 @@
         .input-group input[type="password"],
         .input-group input[type="tel"],
         .input-group input[type="date"],
-        .input-group textarea {
+        .input-group textarea,
+        .input-group select { /* Select elementi için stil eklendi */
             width: 100%;
             padding: 10px;
             border: 1px solid #ddd;
@@ -57,7 +58,8 @@
         }
         .input-group textarea {
             min-height: 80px;
-            resize: vertical;
+            resize: vertical; /* Sadece dikeyde genişletilebilir */
+            width: 100%; /* Genişlik sabit */
         }
 
         /* Input doğrulama ikonları */
@@ -76,11 +78,13 @@
             color: #dc3545; /* Kırmızı çarpı */
         }
         .input-group input.is-valid,
-        .input-group textarea.is-valid {
+        .input-group textarea.is-valid,
+        .input-group select.is-valid { /* Select elementi için stil eklendi */
             border-color: #28a745;
         }
         .input-group input.is-invalid,
-        .input-group textarea.is-invalid {
+        .input-group textarea.is-invalid,
+        .input-group select.is-invalid { /* Select elementi için stil eklendi */
             border-color: #dc3545;
         }
 
@@ -138,7 +142,7 @@
             align-items: center;
             gap: 10px;
         }
-        .address-input-group input[type="text"] {
+        .address-input-group textarea { /* Adres textarea'sı için özel stil */
             flex-grow: 1;
         }
         .address-input-group button {
@@ -269,7 +273,9 @@
 
         .map-buttons {
             display: flex;
+            flex-wrap: wrap; /* Butonların ve metnin sığmaması durumunda alt satıra geçmesini sağlar */
             justify-content: flex-end; /* Butonları sağa hizala */
+            align-items: center; /* Dikeyde ortala */
             gap: 10px;
             margin-top: 15px; /* Harita ile butonlar arasında boşluk */
         }
@@ -308,6 +314,21 @@
 
         .map-buttons .locate-btn:hover {
             background-color: #0056b3;
+        }
+        
+        /* Konum bilgisini gösterecek span için stil */
+        #current-location-display {
+            flex-grow: 1; /* Kalan alanı doldurmasını sağlar */
+            text-align: left; /* Metni sola hizala */
+            font-size: 0.9em;
+            color: #555;
+            padding: 5px 10px;
+            border: 1px solid #eee; /* Hafif bir kenarlık */
+            border-radius: 4px;
+            background-color: #f9f9f9;
+            min-height: 30px; /* Minimum yükseklik */
+            display: flex; /* İçeriği dikeyde ortalamak için */
+            align-items: center;
         }
     </style>
 </head>
@@ -350,6 +371,12 @@
                 <div id="password-strength-bar" class="password-strength-bar"></div>
             </div>
             
+            {# Şifre Onayı Alanı Eklendi #}
+            <div class="input-group">
+                <input type="password" id="confirm_sifre" name="confirm_sifre" placeholder="Şifrenizi Tekrar Girin" required minlength="8">
+                <div class="input-feedback-icon"></div>
+            </div>
+
             {# Telefon numarası için intl-tel-input entegrasyonu #}
             <div class="input-group phone-input-container">
                 <input type="tel" id="telefon" name="telefon" placeholder="Telefon Numarası (örn: 5xx xxx xx xx)" required value="{{ form_data.telefon if form_data else '' }}">
@@ -364,13 +391,28 @@
                 <input type="date" id="dogum_tarihi" name="dogum_tarihi" placeholder="Doğum Tarihi" required value="{{ form_data.dogum_tarihi if form_data else '' }}">
                 <div class="input-feedback-icon"></div>
             </div>
+
+            {# Kullanıcı Rolü Seçim Alanı Eklendi #}
+            <div class="input-group">
+                <select id="rol" name="rol" required>
+                    <option value="" disabled selected>Kullanıcı Rolü Seçin</option>
+                    <option value="normal" {% if form_data.rol == 'normal' %}selected{% endif %}>Normal Kullanıcı</option>
+                    <option value="sürücü" {% if form_data.rol == 'sürücü' %}selected{% endif %}>Sürücü</option>
+                </select>
+                <div class="input-feedback-icon"></div>
+            </div>
+
             <div class="input-group address-input-group"> {# Adres inputu ve harita butonu için yeni grup #}
-                <input type="text" id="adres" name="adres" placeholder="Adresinizi girin veya haritadan seçin" required value="{{ form_data.adres if form_data else '' }}">
+                <textarea id="adres" name="adres" placeholder="Adresinizi girin veya haritadan seçin" required>{{ form_data.adres if form_data else '' }}</textarea>
                 <button type="button" onclick="showLocation()" title="Konumu Haritadan Seç">📍</button>
                 <div class="input-feedback-icon"></div> {# Adres için ikon #}
             </div>
             <input type="hidden" id="latitude" name="latitude"> {# Enlem bilgisi için gizli input #}
             <input type="hidden" id="longitude" name="longitude"> {# Boylam bilgisi için gizli input #}
+
+            {# reCAPTCHA widget'ı buraya eklendi #}
+            <div class="g-recaptcha" data-sitekey="6LfFLporAAAAAO_ShanvYihWcS4j7NxCZQznJfGr"></div>
+            <br/> {# reCAPTCHA'nın altında biraz boşluk bırakmak için #}
 
             <button type="submit">Kayıt Ol</button>
         </form>
@@ -385,6 +427,7 @@
             <div id="map"></div>
             <div class="map-buttons">
                 <button type="button" class="locate-btn" onclick="locateUser()">Konumumu Bul</button>
+                <span id="current-location-display"></span> {# Konum bilgisinin yazılacağı alan #}
                 <button type="button" class="confirm-btn" id="confirmLocationBtn" onclick="confirmAddress()" disabled>Adresi Onayla</button>
                 <button type="button" class="cancel-btn" onclick="closeMapModal()">İptal</button>
             </div>
@@ -395,409 +438,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
     {# Leaflet JS #}
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-    <script>
-        var map;
-        var marker;
-        var selectedLat;
-        var selectedLng;
-
-        // Harita modalını gösteren ve haritayı başlatan/güncelleyen fonksiyon
-        function showLocation() {
-            var mapModal = document.getElementById('map-modal');
-            mapModal.style.display = 'flex'; // Modalı göster
-
-            // Harita zaten başlatıldıysa, sadece boyutunu güncelle
-            if (map) {
-                map.invalidateSize();
-            }
-
-            // Eğer daha önce bir konum seçildiyse, haritayı o konuma odakla
-            if (selectedLat && selectedLng) {
-                initializeOrUpdateMap(selectedLat, selectedLng);
-            } else {
-                // İlk açılışta veya konum seçilmemişse varsayılan olarak Mersin'e odakla
-                initializeOrUpdateMap(36.8121, 34.6415); // Mersin koordinatları
-            }
-        }
-
-        // Kullanıcının mevcut konumunu bulan fonksiyon
-        function locateUser() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    function(position) {
-                        const lat = position.coords.latitude;
-                        const lng = position.coords.longitude;
-                        initializeOrUpdateMap(lat, lng);
-                        flash('Konumunuz başarıyla bulundu.', 'success');
-                    },
-                    function(error) {
-                        console.error("Konum alınamadı:", error);
-                        flash('Konumunuz alınamadı. Lütfen konum izni verdiğinizden emin olun veya haritayı manuel olarak kullanın.', 'error');
-                        // Konum alınamazsa varsayılan konuma geri dön veya mevcut konumu koru
-                        if (!selectedLat || !selectedLng) {
-                            initializeOrUpdateMap(36.8121, 34.6415); // Mersin koordinatları
-                        }
-                    },
-                    { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-                );
-            } else {
-                flash('Tarayıcınız konum servislerini desteklemiyor.', 'error');
-            }
-        }
-
-        // Haritayı başlatan veya güncelleyen ana fonksiyon
-        function initializeOrUpdateMap(lat, lng) {
-            if (!map) {
-                // Harita henüz başlatılmadıysa, başlat
-                map = L.map('map').setView([lat, lng], 13);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                }).addTo(map);
-
-                map.on('click', function(e) {
-                    selectedLat = e.latlng.lat;
-                    selectedLng = e.latlng.lng;
-                    if (marker) {
-                        marker.setLatLng(e.latlng);
-                    } else {
-                        marker = L.marker(e.latlng).addTo(map);
-                    }
-                    document.getElementById('confirmLocationBtn').disabled = false; // Konum seçildiğinde butonu etkinleştir
-                });
-            } else {
-                // Harita zaten başlatıldıysa, sadece görünümünü ayarla
-                map.setView([lat, lng], 13);
-                if (marker) {
-                    marker.setLatLng([lat, lng]);
-                } else {
-                    marker = L.marker([lat, lng]).addTo(map);
-                }
-            }
-            // Harita güncellendiğinde veya yeni konum alındığında seçili konumu güncelle ve onay butonunu etkinleştir
-            selectedLat = lat;
-            selectedLng = lng;
-            document.getElementById('confirmLocationBtn').disabled = false;
-        }
-
-        function closeMapModal() {
-            var mapModal = document.getElementById('map-modal');
-            mapModal.style.display = 'none'; // Modalı gizle
-        }
-
-        async function confirmAddress() {
-            if (selectedLat && selectedLng) {
-                document.getElementById('latitude').value = selectedLat;
-                document.getElementById('longitude').value = selectedLng;
-
-                // Seçilen koordinatlardan adres bilgisini al
-                const nominatimUrl = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${selectedLat}&lon=${selectedLng}`;
-                try {
-                    const response = await fetch(nominatimUrl);
-                    const data = await response.json();
-                    if (data && data.display_name) {
-                        document.getElementById('adres').value = data.display_name;
-                        applyValidationAndIcon(document.getElementById('adres')); // Adres güncellendiğinde ikon güncelle
-                    } else {
-                        document.getElementById('adres').value = `Seçilen Konum: ${selectedLat}, ${selectedLng}`;
-                    }
-                } catch (error) {
-                    console.error('Adres bilgisi alınırken hata oluştu:', error);
-                    document.getElementById('adres').value = `Seçilen Konum: ${selectedLat}, ${selectedLng}`;
-                }
-                closeMapModal();
-            } else {
-                // Modalı kapatmadan önce kullanıcıya uyarı göster
-                flash('Lütfen harita üzerinde bir konum seçin.', 'error');
-            }
-        }
-
-        // intl-tel-input başlatılıyor
-        const phoneInputField = document.getElementById("telefon");
-        const iti = window.intlTelInput(phoneInputField, {
-            utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
-            initialCountry: "tr", // Varsayılan ülke Türkiye
-            onlyCountries: ["tr"], // Sadece Türkiye'yi göster
-            separateDialCode: false, // Ülke kodunu inputtan ayırma (input içinde +90 vs. görünecek)
-            dropdownContainer: document.body, // Menüyü doğrudan body'ye ekle
-        });
-
-        // Eğer telefon inputunda önceden doldurulmuş bir değer varsa, intl-tel-input'a bildir
-        if (phoneInputField.value) {
-            iti.setNumber(phoneInputField.value);
-        }
-
-        // Şifre gücü kontrolü için JavaScript
-        const passwordInput = document.getElementById('sifre');
-        const passwordFeedback = document.getElementById('password-strength-feedback');
-        const passwordStrengthBarContainer = document.querySelector('.password-strength-bar-container');
-        const passwordStrengthBar = document.getElementById('password-strength-bar');
-        const passwordIcon = passwordInput.closest('.input-group').querySelector('.input-feedback-icon');
-
-        passwordInput.addEventListener('input', function() {
-            const password = this.value;
-            
-            // Hide bar and feedback if password is empty
-            if (password.length === 0) {
-                passwordFeedback.classList.add('hidden');
-                passwordStrengthBarContainer.classList.add('hidden');
-                passwordIcon.classList.remove('valid-icon', 'invalid-icon');
-                passwordIcon.textContent = '';
-                return; // Stop further processing
-            } else {
-                passwordFeedback.classList.remove('hidden');
-                passwordStrengthBarContainer.classList.remove('hidden');
-            }
-
-            let strength = 0; // Score from 0-5
-            let feedbackText = '';
-            let feedbackClass = '';
-            let barWidth = 0;
-
-            const hasMinLength = password.length >= 8;
-            const hasUpperCase = /[A-Z]/.test(password);
-            const hasLowerCase = /[a-z]/.test(password);
-            const hasDigit = /[0-9]/.test(password);
-            const hasSpecialChar = /[!@#$%^&*(),.?\":{}|<>]/.test(password);
-
-            if (hasMinLength) strength++;
-            if (hasUpperCase) strength++;
-            if (hasLowerCase) strength++;
-            if (hasDigit) strength++;
-            if (hasSpecialChar) strength++;
-
-            if (strength < 3) {
-                feedbackText = 'Şifre çok zayıf! (En az 8 karakter, B/k harf, rakam, özel karakter önerilir)';
-                feedbackClass = 'weak';
-                barWidth = (strength / 5) * 100;
-                passwordIcon.classList.remove('valid-icon');
-                passwordIcon.classList.add('invalid-icon');
-                passwordIcon.textContent = '✕'; // Red cross
-            } else if (strength >=3 && strength < 5) { // Orta düzey şifreler için (3 veya 4 kriter)
-                feedbackText = 'Şifre orta güçlükte.';
-                feedbackClass = 'medium';
-                barWidth = (strength / 5) * 100;
-                passwordIcon.classList.remove('invalid-icon'); // Orta düzeyde de tik göster
-                passwordIcon.classList.add('valid-icon');
-                passwordIcon.textContent = '✓'; // Green tick
-            } else { // strength === 5
-                feedbackText = 'Şifre güçlü!';
-                feedbackClass = 'strong';
-                barWidth = 100;
-                passwordIcon.classList.remove('invalid-icon');
-                passwordIcon.classList.add('valid-icon');
-                passwordIcon.textContent = '✓'; // Green tick
-            }
-
-            passwordFeedback.textContent = feedbackText;
-            passwordFeedback.className = 'password-feedback ' + feedbackClass;
-
-            passwordStrengthBar.style.width = barWidth + '%';
-            passwordStrengthBar.className = 'password-strength-bar ' + feedbackClass;
-        });
-
-        // Genel input doğrulama ve ikon gösterme
-        const inputsToValidate = [
-            document.getElementById('ad'),
-            document.getElementById('soyad'),
-            document.getElementById('username'),
-            document.getElementById('email'),
-            document.getElementById('telefon'),
-            document.getElementById('tc_no'),
-            document.getElementById('adres') // Doğum tarihi ayrı ele alınır
-        ];
-
-        function applyValidationAndIcon(inputElement) {
-            const iconElement = inputElement.closest('.input-group').querySelector('.input-feedback-icon');
-            if (!iconElement) return;
-
-            if (inputElement.value.length === 0) {
-                inputElement.classList.remove('is-valid', 'is-invalid');
-                iconElement.classList.remove('valid-icon', 'invalid-icon');
-                iconElement.textContent = '';
-            } else if (inputElement.checkValidity()) {
-                inputElement.classList.remove('is-invalid');
-                inputElement.classList.add('is-valid');
-                iconElement.classList.remove('invalid-icon');
-                iconElement.classList.add('valid-icon');
-                iconElement.textContent = '✓'; // Green tick
-            } else {
-                inputElement.classList.remove('is-valid');
-                inputElement.classList.add('is-invalid');
-                iconElement.classList.remove('valid-icon');
-                iconElement.classList.add('invalid-icon');
-                iconElement.textContent = '✕'; // Red cross
-            }
-        }
-
-        inputsToValidate.forEach(input => {
-            if (input) {
-                input.addEventListener('input', function() {
-                    applyValidationAndIcon(this);
-                });
-            }
-        });
-
-        // Telefon numarası için özel doğrulama ve ikon gösterme (intl-tel-input ile)
-        phoneInputField.addEventListener('input', function() {
-            const inputElement = this;
-            const iconElement = inputElement.closest('.input-group').querySelector('.input-feedback-icon');
-            if (!iconElement) return;
-
-            // intl-tel-input'un geçerli numara kontrolünü kullan
-            if (iti.isValidNumber()) {
-                inputElement.classList.remove('is-invalid');
-                inputElement.classList.add('is-valid');
-                iconElement.classList.remove('invalid-icon');
-                iconElement.classList.add('valid-icon');
-                iconElement.textContent = '✓';
-            } else {
-                inputElement.classList.remove('is-valid');
-                inputElement.classList.add('is-invalid');
-                iconElement.classList.remove('valid-icon');
-                iconElement.classList.add('invalid-icon');
-                iconElement.textContent = '✕';
-            }
-            if (inputElement.value.length === 0) { // Boşsa ikonu kaldır
-                inputElement.classList.remove('is-valid', 'is-invalid');
-                iconElement.classList.remove('valid-icon', 'invalid-icon');
-                iconElement.textContent = '';
-            }
-        });
-
-
-        // Doğum tarihi için özel doğrulama ve ikon gösterme
-        const dogumTarihiInput = document.getElementById('dogum_tarihi');
-
-        function validateDogumTarihi() {
-            const inputElement = dogumTarihiInput;
-            const iconElement = inputElement.closest('.input-group').querySelector('.input-feedback-icon');
-            if (!iconElement) return;
-
-            if (inputElement.value.length === 0) {
-                inputElement.classList.remove('is-valid', 'is-invalid');
-                iconElement.classList.remove('valid-icon', 'invalid-icon');
-                iconElement.textContent = '';
-                return;
-            }
-
-            const birthDateStr = inputElement.value;
-            const birthDate = new Date(birthDateStr);
-            const today = new Date();
-            let age = today.getFullYear() - birthDate.getFullYear();
-            const m = today.getMonth() - birthDate.getMonth();
-            if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-                age--;
-            }
-
-            // Prevent future dates
-            if (birthDate > today) {
-                inputElement.classList.remove('is-valid');
-                inputElement.classList.add('is-invalid');
-                iconElement.classList.remove('valid-icon');
-                iconElement.classList.add('invalid-icon');
-                iconElement.textContent = '✕';
-                return;
-            }
-
-            // 18 years old check
-            if (age < 18) {
-                inputElement.classList.remove('is-valid');
-                inputElement.classList.add('is-invalid');
-                iconElement.classList.remove('valid-icon');
-                iconElement.classList.add('invalid-icon');
-                iconElement.textContent = '✕';
-            } else {
-                inputElement.classList.remove('is-invalid');
-                inputElement.classList.add('is-valid');
-                iconElement.classList.remove('invalid-icon');
-                iconElement.classList.add('valid-icon');
-                iconElement.textContent = '✓';
-            }
-        }
-
-        dogumTarihiInput.addEventListener('input', validateDogumTarihi);
-        dogumTarihiInput.addEventListener('change', validateDogumTarihi); // Check when date picker changes
-
-        // Sayfa yüklendiğinde varsayılan değerler için stil ve ikon uygula
-        document.addEventListener('DOMContentLoaded', function() {
-            inputsToValidate.forEach(input => {
-                if (input) {
-                    applyValidationAndIcon(input);
-                }
-            });
-            // Initial validation for phone number
-            phoneInputField.dispatchEvent(new Event('input')); 
-            passwordInput.dispatchEvent(new Event('input')); // Şifre gücü geri bildirimini başlat (başlangıçta gizli olacak)
-            validateDogumTarihi(); // Initial validation for birth date
-        });
-
-        // Form gönderilmeden önce telefon numarasını uluslararası formata çevir
-        const registerForm = document.getElementById('registerForm');
-        registerForm.addEventListener('submit', function(event) {
-            // Şifre gücü kontrolü: Zayıfsa göndermeyi engelle
-            const password = passwordInput.value;
-            let strength = 0;
-            if (password.length >= 8) strength++;
-            if (/[A-Z]/.test(password)) strength++;
-            if (/[a-z]/.test(password)) strength++;
-            if (/[0-9]/.test(password)) strength++;
-            if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) strength++;
-
-            if (strength < 3) { // 3'ten az ise zayıf kabul et
-                event.preventDefault();
-                flash('Şifreniz çok zayıf! Lütfen daha güçlü bir şifre belirleyin.', 'error');
-                passwordInput.focus();
-                return;
-            }
-
-            if (iti.isValidNumber()) {
-                // Telefon numarasını uluslararası formata ayarla
-                // phoneInputField.value = iti.getNumber(); // Bu satır backend'de temizlendiği için burada gereksiz
-            } else {
-                // Eğer numara geçerli değilse, formu göndermeyi engelle ve hata göster
-                event.preventDefault();
-                flash('Lütfen geçerli bir telefon numarası giriniz.', 'error');
-                phoneInputField.focus();
-                return;
-            }
-
-            // Doğum tarihi kontrolü
-            const birthDateStr = dogumTarihiInput.value;
-            const birthDate = new Date(birthDateStr);
-            const today = new Date();
-            let age = today.getFullYear() - birthDate.getFullYear();
-            const m = today.getMonth() - birthDate.getMonth();
-            if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-                age--;
-            }
-
-            if (birthDate > today) {
-                event.preventDefault();
-                flash('Doğum tarihi gelecekte olamaz.', 'error');
-                dogumTarihiInput.focus();
-                return;
-            }
-            if (age < 18) {
-                event.preventDefault();
-                flash('Kayıt olmak için 18 yaşından büyük olmalısınız.', 'error');
-                dogumTarihiInput.focus();
-                return;
-            }
-        });
-
-        // Basit bir flash mesaj fonksiyonu (Flask'ın flash'ı gibi çalışmaz, sadece örnek)
-        function flash(message, category) {
-            const flashesDiv = document.querySelector('.flashes');
-            if (flashesDiv) {
-                const li = document.createElement('li');
-                li.className = category;
-                li.textContent = message;
-                flashesDiv.appendChild(li);
-                setTimeout(() => {
-                    li.remove();
-                }, 5000); // 5 saniye sonra kaldır
-            }
-        }
-    </script>
+    {# reCAPTCHA API script'i #}
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    {# Harici JavaScript dosyasını bağla #}
+    <script src="{{ url_for('static', filename='register.js') }}"></script>
 </body>
 </html>
