@@ -1,30 +1,65 @@
 <!DOCTYPE html>
-<html>
+<html lang="tr">
 <head>
-    <title>Giriş Yap</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giriş Yap / Kayıt Ol</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Kendi özel stil dosyamız -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <style>
+        /* Sadece bu sayfa için gerekli ek stiller */
+        .input-group label {
+            font-weight: 500;
+            color: #4a5568;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+    </style>
 </head>
-<body>
-    <div class="container">
-        <h1>Giriş Yap</h1>
-        {# Flash mesajları burada gösterilir #}
+<body class="bg-gray-100">
+
+    <div class="container max-w-2xl mx-auto p-8 bg-white rounded-xl shadow-2xl space-y-6">
+        <h1 class="text-3xl font-bold text-center">Giriş Yap / Kayıt Ol</h1>
+        
+        <!-- Flaş mesajları için dinamik alan -->
         {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <ul class="flashes">
-                {% for category, message in messages %}
-                    <li class="{{ category }}">{{ message }}</li>
-                {% endfor %}
-                </ul>
-            {% endif %}
+          {% if messages %}
+            <ul class="flashes list-none p-0">
+            {% for category, message in messages %}
+              <li class="{{ category }} text-white p-3 rounded-lg font-semibold mb-2">
+                {{ message }}
+              </li>
+            {% endfor %}
+            </ul>
+          {% endif %}
         {% endwith %}
-        <form action="/giris_yap" method="POST">
-            <input type="text" name="user_identifier" placeholder="Kullanıcı Adı veya E-posta" required>
-            <input type="password" name="sifre" placeholder="Şifre" required>
-            <button type="submit">Giriş Yap</button>
+
+        <!-- Buraya form içeriği gelecek -->
+        <!-- Örnek olarak bir giriş formu -->
+        <form action="{{ url_for('login') }}" method="POST" class="space-y-4">
+            <div class="input-group">
+                <label for="email">Email Adresi</label>
+                <input type="email" id="email" name="email" required
+                       class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none">
+            </div>
+            <div class="input-group">
+                <label for="password">Şifre</label>
+                <input type="password" id="password" name="password" required
+                       class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none">
+            </div>
+            
+            <button type="submit" class="w-full bg-blue-600 text-white font-semibold py-3 px-6 rounded-lg text-lg">
+                Giriş Yap
+            </button>
         </form>
-        <p>Hesabınız yok mu? <a href="/">Kayıt Olun</a></p>
-        <p><a href="/sifre_sifirla">Şifreni mi unuttun?</a></p> {# <-- İşte burada! #}
+
+        <p class="text-center text-gray-600 mt-4">
+            Henüz hesabın yok mu? <a href="{{ url_for('register') }}" class="text-blue-600 font-medium hover:underline">Kayıt Ol</a>
+        </p>
+
     </div>
+
 </body>
 </html>
