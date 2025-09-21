@@ -8,6 +8,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.css"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    {# Leaflet.js Harita Kütüphanesi CSS #}
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+        xintegrity="sha512-xodxCoA9dF36+iS29kX4n59tA7jL/V7k7C2/m5j6g8u4q5z3e6p7S+F+D+d+M+a+C+P+y3J+iQ=="
+        crossorigin=""/>
     <style>
         .password-group {
             position: relative;
@@ -89,8 +93,9 @@
                 <input type="date" id="dogum_tarihi" name="dogum_tarihi" placeholder="Doğum Tarihi" required value="{{ form_data.dogum_tarihi if form_data else '' }}">
                 <div class="input-feedback-icon"></div>
             </div>
-            <div class="input-group">
+            <div class="input-group address-group">
                 <textarea id="adres" name="adres" placeholder="Adres">{{ form_data.adres if form_data else '' }}</textarea>
+                <button type="button" id="showMapBtn" class="show-map-btn">Haritada Göster</button>
                 <div class="input-feedback-icon"></div>
             </div>
             <div class="input-group">
@@ -101,7 +106,6 @@
                 </select>
                 <div class="input-feedback-icon"></div>
             </div>
-            {# Rol seçimi kaldırıldı, çünkü tüm kullanıcılar artık 'normal' olacak #}
             
             <div class="g-recaptcha" data-sitekey="YOUR_RECAPTCHA_SITE_KEY"></div>
             <button type="submit">Kayıt Ol</button>
@@ -109,8 +113,30 @@
         <p>Zaten hesabınız var? <a href="/giris">Giriş Yapın</a></p>
     </div>
 
+    <!-- Harita Paneli -->
+    <div id="mapPanel" class="map-panel hidden">
+        <div class="map-content">
+            <button id="closeMapBtn" class="close-map-btn">&times;</button>
+            <div class="map-controls">
+                <input type="text" id="mapAddressSearch" placeholder="Adres Ara">
+                <button id="searchMapBtn">Haritada Göster</button>
+            </div>
+            <button id="findMeBtn" class="find-me-btn">Konumumu Bul</button>
+            <div id="map" class="map-container"></div>
+            <div class="map-address-info">
+                <p><strong>Bulunan Adres:</strong></p>
+                <textarea id="foundAddress" rows="3" readonly></textarea>
+                <button id="selectAddressBtn" class="select-address-btn">Tamam</button>
+            </div>
+        </div>
+    </div>
+
     {# intl-tel-input JavaScript #}
     <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
+    {# Leaflet.js Harita Kütüphanesi JavaScript #}
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+        xintegrity="sha512-wt3eFwXpA5C1p4F2t9W3K9m/eF1d6q2g4G7n4C9z9e2k9g9r1y4u8+2w8a4o8/2n/04j01n+f0g=="
+        crossorigin=""></script>
     <script>
         // intl-tel-input başlatılıyor
         const phoneInputField = document.getElementById("telefon");
@@ -451,6 +477,123 @@
                 eyeOffIcon.style.display = "none";
                 toggle.classList.remove("active");
             }
+        }
+
+        // Harita Paneli ve Harita Fonksiyonları
+        const mapPanel = document.getElementById('mapPanel');
+        const showMapBtn = document.getElementById('showMapBtn');
+        const closeMapBtn = document.getElementById('closeMapBtn');
+        const findMeBtn = document.getElementById('findMeBtn');
+        const mapAddressSearch = document.getElementById('mapAddressSearch');
+        const searchMapBtn = document.getElementById('searchMapBtn');
+        const foundAddressTextarea = document.getElementById('foundAddress');
+        const selectAddressBtn = document.getElementById('selectAddressBtn');
+
+        let map;
+        let marker;
+
+        showMapBtn.addEventListener('click', () => {
+            mapPanel.classList.remove('hidden');
+            if (!map) {
+                map = L.map('map').setView([38.9637, 35.2433], 6); // Türkiye merkezli başlangıç görünümü
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                }).addTo(map);
+                map.on('click', onMapClick);
+            }
+            setTimeout(() => {
+                map.invalidateSize();
+            }, 100);
+        });
+
+        closeMapBtn.addEventListener('click', () => {
+            mapPanel.classList.add('hidden');
+        });
+
+        selectAddressBtn.addEventListener('click', () => {
+            const mainAddressInput = document.getElementById('adres');
+            mainAddressInput.value = foundAddressTextarea.value;
+            mapPanel.classList.add('hidden');
+        });
+
+        findMeBtn.addEventListener('click', () => {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(position => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    const currentLatLng = [lat, lng];
+                    
+                    map.setView(currentLatLng, 15);
+                    updateMarker(currentLatLng);
+                    reverseGeocode(lat, lng);
+                }, error => {
+                    flash('Konumunuz bulunamadı: ' + error.message, 'error');
+                });
+            } else {
+                flash('Tarayıcınız konum servislerini desteklemiyor.', 'error');
+            }
+        });
+        
+        searchMapBtn.addEventListener('click', () => {
+            const address = mapAddressSearch.value;
+            if (address) {
+                geocode(address);
+            }
+        });
+
+        function updateMarker(latlng) {
+            if (marker) {
+                map.removeLayer(marker);
+            }
+            marker = L.marker(latlng).addTo(map);
+            marker.bindPopup("<b>Seçilen Konum</b>").openPopup();
+        }
+
+        async function reverseGeocode(lat, lng) {
+            const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`;
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                if (data && data.address) {
+                    const address = data.display_name;
+                    foundAddressTextarea.value = address;
+                } else {
+                    foundAddressTextarea.value = "Adres bulunamadı.";
+                }
+            } catch (error) {
+                foundAddressTextarea.value = "Adres bulunurken bir hata oluştu.";
+                console.error("Reverse geocoding hatası:", error);
+            }
+        }
+        
+        async function geocode(address) {
+            const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`;
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                if (data.length > 0) {
+                    const lat = parseFloat(data[0].lat);
+                    const lng = parseFloat(data[0].lon);
+                    const latlng = [lat, lng];
+                    
+                    map.setView(latlng, 15);
+                    updateMarker(latlng);
+                    foundAddressTextarea.value = data[0].display_name;
+                } else {
+                    flash("Adres bulunamadı. Lütfen daha detaylı bir adres girin.", 'error');
+                }
+            } catch (error) {
+                flash("Adres bulunurken bir hata oluştu.", 'error');
+                console.error("Geocoding hatası:", error);
+            }
+        }
+        
+        function onMapClick(e) {
+            const lat = e.latlng.lat;
+            const lng = e.latlng.lng;
+            updateMarker(e.latlng);
+            reverseGeocode(lat, lng);
         }
     </script>
 </body>
