@@ -8,6 +8,14 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.css"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    <style>
+        .password-group {
+            position: relative;
+        }
+        .input-group input[type="password"] {
+            padding-right: 35px; /* İkonlar için boşluk bırakma */
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -39,16 +47,34 @@
                 <input type="email" id="email" name="email" placeholder="E-posta" required value="{{ form_data.email if form_data else '' }}">
                 <div class="input-feedback-icon"></div>
             </div>
-            <div class="input-group">
+            <div class="input-group password-group">
                 <input type="password" id="sifre" name="sifre" placeholder="Şifre (min 8 karakter, B/k harf, rakam, özel)" required minlength="8">
+                <span class="toggle-password" onclick="togglePassword('sifre')">
+                    <svg class="eye-icon" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                    <svg class="eye-off-icon" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.94 3.06M2 2l20 20"></path>
+                    </svg>
+                </span>
                 <div class="input-feedback-icon"></div>
             </div>
             <div id="password-strength-feedback" class="password-feedback hidden"></div>
             <div class="password-strength-bar-container hidden">
                 <div id="password-strength-bar" class="password-strength-bar"></div>
             </div>
-            <div class="input-group">
+            <div class="input-group password-group">
                 <input type="password" id="confirm_sifre" name="confirm_sifre" placeholder="Şifrenizi Tekrar Girin" required minlength="8">
+                <span class="toggle-password" onclick="togglePassword('confirm_sifre')">
+                    <svg class="eye-icon" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                    <svg class="eye-off-icon" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.94 3.06M2 2l20 20"></path>
+                    </svg>
+                </span>
                 <div class="input-feedback-icon"></div>
             </div>
             <div class="input-group phone-input-container">
@@ -405,6 +431,25 @@
                 setTimeout(() => {
                     li.remove();
                 }, 5000);
+            }
+        }
+        
+        function togglePassword(id) {
+            const input = document.getElementById(id);
+            const toggle = input.closest(".password-group").querySelector(".toggle-password");
+            const eyeIcon = toggle.querySelector(".eye-icon");
+            const eyeOffIcon = toggle.querySelector(".eye-off-icon");
+            
+            if (input.type === "password") {
+                input.type = "text";
+                eyeIcon.style.display = "none";
+                eyeOffIcon.style.display = "block";
+                toggle.classList.add("active");
+            } else {
+                input.type = "password";
+                eyeIcon.style.display = "block";
+                eyeOffIcon.style.display = "none";
+                toggle.classList.remove("active");
             }
         }
     </script>

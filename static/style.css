@@ -270,6 +270,32 @@ p a:hover {
     justify-content: center;
 }
 
+/* Şifre göster/gizle butonu */
+.toggle-password {
+    position: absolute;
+    right: 35px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    font-size: 1.1em;
+    opacity: 0.6;
+    transition: opacity 0.3s ease, transform 0.2s ease;
+    user-select: none;
+}
+
+.toggle-password:hover {
+    opacity: 1;
+    transform: translateY(-50%) scale(1.2);
+}
+
+.toggle-password.active {
+    color: #28a745;
+    transform: translateY(-50%) scale(1.1) rotate(15deg);
+}
+.toggle-password svg {
+    width: 24px;
+    height: 24px;
+}
 /* Responsive Düzenlemeler */
 @media (max-width: 768px) {
     .container {
