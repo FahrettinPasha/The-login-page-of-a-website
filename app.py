@@ -20,7 +20,7 @@ app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = 'karacemalopsiyonel@gmail.com'  # Your GMAIL address
-app.config['MAIL_PASSWORD'] = 'yjvf wjii iofc jnwo'      # Your Google App Password
+app.config['MAIL_PASSWORD'] = 'your google app password'      # Your Google App Password
 
 # reCAPTCHA Secret Key (BURAYI KENDİ ANAHTARINLA DEĞİŞTİR!)
 app.config['RECAPTCHA_SECRET_KEY'] = 'YOUR_RECAPTCHA_SECRET_KEY' 
